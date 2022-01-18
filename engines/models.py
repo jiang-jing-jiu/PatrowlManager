@@ -21,9 +21,9 @@ API_AUTH_METHODS = (
 
 
 class Engine(models.Model):
-    name = models.CharField(max_length=200, unique=True)
-    description = models.TextField()
-    allowed_asset_types = models.TextField(null=True)
+    name = models.CharField(max_length=200, unique=True,verbose_name="名称")
+    description = models.TextField(verbose_name="描述")
+    allowed_asset_types = models.TextField(null=True,verbose_name="允许的资产类型")
     created_at = models.DateTimeField(default=timezone.now)
     updated_at = models.DateTimeField(default=timezone.now)
 
@@ -70,18 +70,19 @@ def engine_delete_log(sender, **kwargs):
 
 
 class EngineInstance(models.Model):
-    engine = models.ForeignKey(Engine, on_delete=models.CASCADE)
+    engine = models.ForeignKey(Engine, on_delete=models.CASCADE,verbose_name="引擎")
     # engine = models.ForeignKey(Engine, on_delete=models.CASCADE)
-    name = models.CharField(max_length=200, unique=True)
+    name = models.CharField(max_length=200, unique=True,verbose_name="名称")
     version = models.CharField(max_length=20)
-    api_url = models.CharField(max_length=256)
-    enabled = models.BooleanField(default=True)
+    api_url = models.CharField(max_length=256,verbose_name="API 地址")
+    enabled = models.BooleanField(default=True,verbose_name="启用")
     status = models.CharField(max_length=20, default='idle')
     authentication_method = models.CharField(
-        choices=API_AUTH_METHODS, default='None', max_length=10)
+        choices=API_AUTH_METHODS, default='None', max_length=10,verbose_name="身份验证方法")
     api_key = models.CharField(max_length=100, null=True, blank=True)
     username = models.CharField(max_length=100, null=True, blank=True)
     password = models.CharField(max_length=100, null=True, blank=True)
+    user_id = models.IntegerField(null=True,verbose_name="用户ID") #2021.11.28 新增权限
     created_at = models.DateTimeField(default=timezone.now)
     updated_at = models.DateTimeField(default=timezone.now)
 
@@ -139,10 +140,10 @@ def engineinstance_delete_log(sender, **kwargs):
 
 
 class EnginePolicyScope(models.Model):
-    name = models.CharField(max_length=250)
-    priority = models.IntegerField(null=True, blank=True)
-    created_at = models.DateTimeField(default=timezone.now)
-    updated_at = models.DateTimeField(default=timezone.now)
+    name        = models.CharField(max_length=250)
+    priority    = models.IntegerField(null=True, blank=True)
+    created_at  = models.DateTimeField(default=timezone.now)
+    updated_at  = models.DateTimeField(default=timezone.now)
 
     # class Meta:
     #     db_table = 'engine_policy_scopes'
@@ -189,18 +190,18 @@ def enginepolicyscope_delete_log(sender, **kwargs):
 
 
 class EnginePolicy(models.Model):
-    engine = models.ForeignKey(Engine, on_delete=models.CASCADE)
-    owner = models.ForeignKey(get_user_model(), null=True, on_delete=models.SET_NULL)
-    name = models.CharField(max_length=200)
-    default = models.BooleanField(default=False)
-    description = models.CharField(max_length=200)
-    options = JSONField(null=True, blank=True, default=dict)
-    file = models.FileField(upload_to='./policies/', null=True, blank=True)
-    status = models.CharField(max_length=50)  # active / trashed
-    is_default = models.BooleanField(default=False)
-    scopes = models.ManyToManyField(EnginePolicyScope)
-    created_at = models.DateTimeField(default=timezone.now)
-    updated_at = models.DateTimeField(default=timezone.now)
+    engine      = models.ForeignKey(Engine, on_delete=models.CASCADE,verbose_name='引擎')
+    owner       = models.ForeignKey(get_user_model(), null=True, on_delete=models.SET_NULL)
+    name        = models.CharField(max_length=200,verbose_name='名称')
+    default     = models.BooleanField(default=False)
+    description = models.CharField(max_length=200,verbose_name='描述')
+    options     = JSONField(null=True, blank=True, default=dict,verbose_name='选项')
+    file        = models.FileField(upload_to='./policies/', null=True, blank=True,verbose_name='文件')
+    status      = models.CharField(max_length=50)    #active / trashed
+    is_default  = models.BooleanField(default=False,verbose_name='默认值')
+    scopes      = models.ManyToManyField(EnginePolicyScope,verbose_name="范围")
+    created_at  = models.DateTimeField(default=timezone.now)
+    updated_at  = models.DateTimeField(default=timezone.now)
 
     class Meta:
         #db_table = 'engine_policies'
@@ -218,9 +219,7 @@ class EnginePolicy(models.Model):
             # ex: /media/policies/NESSUS/2/nessuspolicy.nessus
             new_name = '/'.join(['policies', self.engine.name, str(self.owner.id), os.path.basename(initial_path)])
             new_path = os.path.join(MEDIA_ROOT, 'policies',
-                self.engine.name, str(self.owner.id),
-                os.path.basename(initial_path)
-            )
+                self.engine.name, str(self.owner.id), os.path.basename(initial_path))
 
             # create /media/policies/<engine_name>/ if not exists
             if not os.path.exists(MEDIA_ROOT+"/policies/"+self.engine.name):
@@ -260,7 +259,7 @@ class EnginePolicy(models.Model):
             'name': self.name,
             'engine': self.engine.id,
             'engine_name': self.engine.name,
-            'owner': self.owner_id,
+            'owner': self.owner.id,
             'default': self.default,
             'description': self.description,
             'options': self.options,

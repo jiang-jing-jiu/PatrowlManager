@@ -11,6 +11,7 @@ from rules.models import Rule
 from rest_framework.decorators import api_view
 from common.utils.encoding import json_serial
 from common.utils import pro_group_required
+from django.db.models import Q
 import json
 import csv
 
@@ -100,7 +101,7 @@ def export_findings_csv_api(request):
 
         asset_groupnames = ','.join([g.name for g in finding.asset.assetgroup_set.all()])
         asset_tags = ','.join([c.value for c in finding.asset.categories.all()])
-
+    
         try:
             writer.writerow([
                 finding.asset.value, finding.asset.type, asset_groupnames,
@@ -117,19 +118,6 @@ def export_findings_csv_api(request):
             pass
 
     return response
-
-
-@api_view(['GET'])
-@pro_group_required('FindingsManager')
-def delete_filtered_findings_api(request):
-    """Delete all filtered findings."""
-    for finding in _search_findings(request):
-        try:
-            finding.delete()
-        except Exception:
-            pass
-
-    return JsonResponse({'status': 'success'})
 
 
 @api_view(['GET'])
@@ -197,7 +185,7 @@ def delete_rawfindings_api(request):
     for finding_id in findings:
         f = RawFinding.objects.for_user(request.user).get(id=finding_id)
 
-        # reevaluate related asset criticality
+        # reevaluate related asset critity
         Asset.objects.for_user(request.user).get(id=f.asset.id).evaluate_risk()
         f.delete()
 
@@ -264,10 +252,10 @@ def get_findings_stats_api(request):
     data = {
         "nb_findings": findings.count(),
         "nb_info": findings.filter(severity="info").count(),
-        "nb_low": findings.filter(severity="low").exclude(status__in=['false-positive', 'duplicate', 'closed', 'patched', 'undone']).count(),
-        "nb_medium": findings.filter(severity="medium").exclude(status__in=['false-positive', 'duplicate', 'closed', 'patched', 'undone']).count(),
-        "nb_high": findings.filter(severity="high").exclude(status__in=['false-positive', 'duplicate', 'closed', 'patched', 'undone']).count(),
-        "nb_critical": findings.filter(severity="critical").exclude(status__in=['false-positive', 'duplicate', 'closed', 'patched', 'undone']).count(),
+        "nb_low": findings.filter(severity="low").exclude(Q(status='false-positive') | Q(status='duplicate')).count(),
+        "nb_medium": findings.filter(severity="medium").exclude(Q(status='false-positive') | Q(status='duplicate')).count(),
+        "nb_high": findings.filter(severity="high").exclude(Q(status='false-positive') | Q(status='duplicate')).count(),
+        "nb_critical": findings.filter(severity="critical").exclude(Q(status='false-positive') | Q(status='duplicate')).count(),
         "nb_new_findings": findings.filter(status="new").count(),
         "nb_new_info": findings.filter(status="new", severity="info").count(),
         "nb_new_low": findings.filter(status="new", severity="low").count(),
@@ -307,30 +295,13 @@ def send_finding_alerts_api(request, finding_id):
 @api_view(['GET'])
 @pro_group_required('FindingsManager')
 def generate_finding_alerts_api(request, finding_id):
-    # if request.GET.get("raw", None) and request.GET.get("raw") == "true":
-    #     finding = get_object_or_404(RawFinding.objects.for_user(request.user), id=finding_id)
-    # else:
-    #     finding = get_object_or_404(Finding.objects.for_user(request.user), id=finding_id)
-
-    try:
+    if request.GET.get("raw", None) and request.GET.get("raw") == "true":
+        finding = get_object_or_404(RawFinding.objects.for_user(request.user), id=finding_id)
+    else:
         finding = get_object_or_404(Finding.objects.for_user(request.user), id=finding_id)
-        nb_matches = finding.evaluate_alert_rules()
-        return JsonResponse({"status": "success", "nb_matches": nb_matches})
-    except Exception as e:
-        print(e.message)
-        return JsonResponse({"status": "error", "nb_matches": 0})
 
-@api_view(['GET'])
-@pro_group_required('FindingsManager')
-def evaluate_assets(request, finding_id):
-    assets = []
-    try:
-        finding = get_object_or_404(Finding.objects.for_user(request.user), id=finding_id)
-        assets = finding.evaluate_assets()
-    except Exception as e:
-        print(e)
-        return JsonResponse({"status": "error"})
-    return JsonResponse({"status": "success", "assets": assets})
+    nb_matches = finding.evaluate_alert_rules()
+    return JsonResponse({"status": "success", "nb_matches": nb_matches})
 
 
 @api_view(['POST'])

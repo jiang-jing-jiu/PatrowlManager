@@ -5,13 +5,13 @@
   <table class="table table-hover">
     <thead>
       <tr>
-        <th data-field="name">Username</th>
+        <th data-field="name">用户名</th>
         <!-- <th data-field="profile">Profil</th> -->
-        <th data-field="apitoken">API-Token</th>
-        <th data-field="status">Status</th>
-        <th data-field="is_authenticated">Authenticated ?</th>
-        <th data-field="updated_at">Last update</th>
-        <th data-field="actions">Actions</th>
+        <th data-field="apitoken">令牌</th>
+        <th data-field="status">状态</th>
+        <th data-field="is_authenticated">认证 ?</th>
+        <th data-field="updated_at">上次更新</th>
+        <th data-field="actions">操作</th>
       </tr>
     </thead>
     <tbody>
@@ -55,16 +55,16 @@
               </div>
               <div class="modal-body">
                 <dl class="dl-horizontal">
-                  <dt>Username</dt><dd>{{user.username}}</dd>
-                  <dt>First Name</dt><dd>{{user.first_name}}</dd>
-                  <dt>Last Name</dt><dd>{{user.last_name}}</dd>
-                  <dt>Email</dt><dd>{{user.email}}</dd>
-                  <dt>Last login</dt><dd>{{user.last_login}}</dd>
-                  <dt>Created at</dt><dd>{{user.date_joined}}</dd>
+                  <dt>用户名</dt><dd>{{user.username}}</dd>
+                  <dt>姓</dt><dd>{{user.first_name}}</dd>
+                  <dt>名</dt><dd>{{user.last_name}}</dd>
+                  <dt>邮箱</dt><dd>{{user.email}}</dd>
+                  <dt>最后登录时间</dt><dd>{{user.last_login}}</dd>
+                  <dt>添加时间</dt><dd>{{user.date_joined}}</dd>
               </div>
               <div class="modal-footer">
-                <button type="button" class="btn btn-warning btn-xs" data-dismiss="modal" onclick="location.href='/admin/auth/user/{{ user.id }}/change/'">Edit</button>
-                <button type="button" class="btn btn-default btn-xs" data-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-warning btn-xs" data-dismiss="modal" onclick="location.href='/admin/auth/user/{{ user.id }}/change/'">编辑</button>
+                <button type="button" class="btn btn-default btn-xs" data-dismiss="modal">关闭</button>
               </div>
             </div>
           </div>
@@ -78,12 +78,12 @@
   {% endfor %}
   </tbody>
   </table>
-  <a href="/users/add">+ Add a new user</a>
+  <a href="/users/add">+ 添加用户</a>
 
   {% if messages %}
   <ul class="messages">
       {% for message in messages %}
-      <li {% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message }}</li>
+      <li{% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message }}</li>
       {% endfor %}
   </ul>
   {% endif %}

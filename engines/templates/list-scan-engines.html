@@ -3,21 +3,21 @@
 {% block content %}
 
 <ul class="breadcrumb">
-  <li><a href="{% url 'list_engines_view' %}">engines</a></li>
-  <li class="active">instances</li>
+  <li><a href="{% url 'list_engines_view' %}">引擎</a></li>
+  <li class="active">实例</li>
 </ul>
 
 <div class="container">
   <table class="table table-hover">
     <thead>
       <tr>
-        <th scope="col">Type</th>
-        <th scope="col">Name</th>
-        <th scope="col">Funct. Status</th>
-        <th scope="col">Oper.State</th>
-        <th scope="col">API URL</th>
-        <th scope="col">Last update</th>
-        <th scope="col">Actions</th>
+        <th>类型</th>
+        <th>名称</th>
+        <th>功能状态</th>
+        <th>操作状态</th>
+        <th>API 地址</th>
+        <th>上次更新</th>
+        <th>操作</th>
       </tr>
     </thead>
     <tbody>
@@ -26,14 +26,15 @@
       <td>{{ engine.type }}</td>
       <td>{{ engine.name }}</td>
       {% if engine.enabled %}
-      <td><span class="label label-success">Enabled</span></td>
+      <td><span class="label label-success">激活</span></td>
       {% else %}
-      <td><span class="label label-danger">Disabled</span></td>
+      <td><span class="label label-danger">冻结</span></td>
       {% endif %}
       {% if engine.status == 'READY' %}
-      <td><span class="glyphicon glyphicon-ok" style="color:green"></span> Ready</td>
+      <td><span class="glyphicon glyphicon-ok" style="color:green"></span>可用</td>
       {% else %}
-      <td><span class="glyphicon glyphicon-remove" style="color:red"></span> {{ engine.status }}</td>
+{#          {{ engine.status }}  #}
+      <td><span class="glyphicon glyphicon-remove" style="color:red"></span> 不可用</td>
       {% endif %}
       <td>{{ engine.api_url }}</td>
       <td>{{ engine.updated_at|smartdate }}</td>
@@ -52,10 +53,10 @@
                 <span class="glyphicon glyphicon-remove"></span></button>
               {% if engine.enabled %}
               <button type="button" class="btn btn-warning dropdown-toggle btn-xs btn-change-status" aria-haspopup="true" aria-expanded="false" engine-id="{{ engine.id }}">
-                Disable</button>
+                冻结</button>
               {% else %}
               <button type="button" class="btn btn-success dropdown-toggle btn-xs btn-change-status" aria-haspopup="true" aria-expanded="false" engine-id="{{ engine.id }}">
-                Enable</button>
+                激活</button>
               {% endif %}
 
             {% else %}
@@ -101,21 +102,21 @@
   </table>
   {% if PRO_EDITION %}
     {% if request.user.is_superuser or request.user|has_role:"MANAGER" %}
-    <a href="/engines/add">+ Add a new scan engine</a><br/>
-    <a href="#" class="text-warning btn-refresh-all-engines">* Refresh scan engine status</a><br/>
+    <a href="/engines/add">+ 添加新的扫描引擎</a><br/>
+    <a href="#" class="text-warning btn-refresh-all-engines">* 刷新扫描引擎状态</a><br/>
     {% if autorefresh_status %}
-      <a href="#" class="text-danger btn-autorefresh-all-engines">* Disable Auto-refresh scan engine status</a>
+      <a href="#" class="text-danger btn-autorefresh-all-engines">* 禁用自动刷新扫描引擎状态</a>
     {% else %}
-      <a href="#" class="text-danger btn-autorefresh-all-engines">* Enable Auto-refresh scan engine status</a>
+      <a href="#" class="text-danger btn-autorefresh-all-engines">* 启用自动刷新扫描引擎状态</a>
     {% endif %}
     {% endif %}
   {% else %}
-    <a href="/engines/add">+ Add a new scan engine</a><br/>
-    <a href="#" class="text-warning btn-refresh-all-engines">* Refresh scan engine status</a><br/>
+    <a href="/engines/add">+ 添加新的扫描引擎</a><br/>
+    <a href="#" class="text-warning btn-refresh-all-engines">* 刷新扫描引擎状态</a><br/>
     {% if autorefresh_status %}
-      <a href="#" class="text-danger btn-autorefresh-all-engines">* Disable Auto-refresh scan engine status</a>
+      <a href="#" class="text-danger btn-autorefresh-all-engines">* 禁用自动刷新扫描引擎状态</a>
     {% else %}
-      <a href="#" class="text-danger btn-autorefresh-all-engines">* Enable Auto-refresh scan engine status</a>
+      <a href="#" class="text-danger btn-autorefresh-all-engines">* 启用自动刷新扫描引擎状态</a>
     {% endif %}
   {% endif %}
 
@@ -140,7 +141,7 @@
           <span aria-hidden="true">&times;</span>
           <span class="sr-only">Close</span>
         </button>
-        <h4 class="modal-title" id="myModalLabel">Delete engine</h4>
+        <h4 class="modal-title" id="myModalLabel">删除引擎</h4>
       </div>
 
       <!-- Modal Body -->
@@ -148,9 +149,9 @@
         <div id="delete-engine">
           <!-- Content -->
         </div>
-        Confirm Deleting?
-        <button type="button" class="btn btn-xs btn-warning btn-delete-engine" data-dismiss="modal" autofocus>Yes</button>
-        <button type="button" class="btn btn-xs btn-primary" data-dismiss="modal">No</button>
+        确认删除?
+        <button type="button" class="btn btn-xs btn-warning btn-delete-engine" data-dismiss="modal" autofocus>是</button>
+        <button type="button" class="btn btn-xs btn-primary" data-dismiss="modal">否</button>
       </div>
     </div>
   </div>
@@ -166,7 +167,7 @@
           <span aria-hidden="true">&times;</span>
           <span class="sr-only">Close</span>
         </button>
-        <h4 class="modal-title" id="myModalLabel">Engine info</h4>
+        <h4 class="modal-title" id="myModalLabel">引擎信息</h4>
       </div>
 
       <!-- Modal Body -->
@@ -174,7 +175,7 @@
         <div id="info-engine">
           <!-- Content -->
         </div>
-        <button type="button" class="btn btn-xs btn-primary" data-dismiss="modal">Cancel</button>
+        <button type="button" class="btn btn-xs btn-primary" data-dismiss="modal">关闭</button>
       </div>
     </div>
   </div>
@@ -196,30 +197,30 @@
           $("div#info-engine").html("Loading...");
         },
         success: function(data, textStatus, jqXHR){
-          info_data = "Engine: <strong>"+escapeHtml(data["engine"]["name"])+"</strong><br/>";
-          info_data+= "API URL: <strong>"+escapeHtml(data["engine"]["api_url"])+"</strong><br/>";
+          info_data = "名称: <b>"+data["engine"]["name"]+"</b><br/>";
+          info_data+= "API地址: <b>"+data["engine"]["api_url"]+"</b><br/>";
 
           if(data["engine_infos"]["status"] == "ERROR") {
-            info_data+= "Oper status: <strong>ERROR</strong><br/>";
+            info_data+= "操作状态: <b>不可用</b><br/>";
             if(data["engine_infos"]["details"]){
-              info_data+= "Request: <strong>"+escapeHtml(data["engine_infos"]["details"]["request"])+"</strong></br>"
-              info_data+= "Reason: <strong>"+escapeHtml(data["engine_infos"]["details"]["reason"])+"</strong></br>"
+              info_data+= "请求地址: <b>"+data["engine_infos"]["details"]["request"]+"</b></br>"
+              info_data+= "访问结果: <b>"+data["engine_infos"]["details"]["reason"]+"</b></br>"
             }
           } else {
-            info_data+= "Nb scans: <strong>"+escapeHtml(data["nb_scans"])+"</strong><br/>";
-            info_data+= "Oper status: <strong>"+escapeHtml(data["engine_infos"]["engine_config"]["status"])+"</strong><br/>";
-            info_data+= "Version: <strong>"+escapeHtml(data["engine_infos"]["engine_config"]["version"])+"</strong><br/>";
-            info_data+= "Description: <strong>"+escapeHtml(data["engine_infos"]["engine_config"]["description"])+"</strong><br/>";
+            info_data+= "Nb scans: <b>"+data["nb_scans"]+"</b><br/>";
+            info_data+= "Oper status: <b>"+data["engine_infos"]["engine_config"]["status"]+"</b><br/>";
+            info_data+= "Version: <b>"+data["engine_infos"]["engine_config"]["version"]+"</b><br/>";
+            info_data+= "Description: <b>"+data["engine_infos"]["engine_config"]["description"]+"</b><br/>";
 
             current_scans=data["current_scans"];
             if (current_scans == null || Object.keys(current_scans).length === 0) {
-              info_data+= "Current scans: <strong>no scan in progress</strong><br/>";
+              info_data+= "Current scans: <b>no scan in progress</b><br/>";
             } else {
               info_data+= "Current scans: <br/>";
               for (var scan in current_scans){
                 if (current_scans.hasOwnProperty(scan)) {
                   scan_id = Object.keys(current_scans[scan])[0];
-                  info_data+= " * id="+scan_id+", started_at: "+new Date(current_scans[scan][scan_id]["started_at"])+", status: "+escapeHtml(current_scans[scan][scan_id]["status"])+" <br/>";
+                  info_data+= " * id="+scan_id+", started_at: "+new Date(current_scans[scan][scan_id]["started_at"])+", status: "+current_scans[scan][scan_id]["status"]+" <br/>";
                 }
               }
             }
@@ -235,7 +236,7 @@
       engine_id = e.relatedTarget.getAttribute('engine-id');
       engine_name = e.relatedTarget.getAttribute('engine-name');
       $("div#delete-engine").attr('engine-id', engine_id);
-      $("div#delete-engine").html("Engine: <strong>"+escapeHtml(engine_name)+"</strong><br/><br/>");
+      $("div#delete-engine").html("引擎: <b>"+engine_name+"</b><br/><br/>");
     });
     $("button.btn-delete-engine").on('click', function (e) {
       engine_id = $("div#delete-engine").attr('engine-id');

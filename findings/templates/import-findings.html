@@ -2,13 +2,13 @@
 {% block content %}
 
 <ul class="breadcrumb">
-  <li><a href="{% url 'list_findings_view' %}">findings</a></li>
-  <li class="active">import</li>
+  <li><a href="{% url 'list_findings_view' %}">扫描结果</a></li>
+  <li class="active">导入</li>
 </ul>
 
 <div class="container">
   <form action="/findings/import" method="post" class="form-horizontal" enctype="multipart/form-data">
-    <legend>Import findings</legend>
+    <legend>导入扫描结果</legend>
       {% csrf_token %}
       {% for field in form %}
           {% if field.errors %}
@@ -35,10 +35,10 @@
       {% endfor %}
       <div class="form-group submit-div">
         <div class="col-sm-4">
-          <input type="submit" class="btn btn-primary" value="Import Findings">
+          <input type="submit" class="btn btn-primary" value="导入扫描结果">
         </div>
         <div class="col-sm-4">
-          <button class="btn btn-primary"><a href="/findings/list">Cancel</a></button>
+          <button class="btn btn-primary"><a href="/findings/list">取消</a></button>
         </div>
       </div>
   </form>

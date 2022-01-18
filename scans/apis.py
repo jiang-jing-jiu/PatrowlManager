@@ -249,12 +249,19 @@ def get_scans_heatmap_api(request):
     teamid = -1
     if settings.PRO_EDITION is True and request.GET.get('team', '').isnumeric() and int(request.GET.get('team', -1)) >= 0:
         teamid = int(request.GET.get('team'))
+    
+    # 2021.11.29 权限新增    
+    filter = {}
+    if request.user.id >1:
+        filter.update({
+            'owner_id' : request.user.id
+        })
 
     if teamid >= 0:
-        for scan in Scan.objects.for_team(request.user, teamid).all():
+        for scan in Scan.objects.filter(**filter).for_team(request.user, teamid).all():
             data.update({scan.updated_at.astimezone(tzlocal.get_localzone()).strftime("%s"): 1})
     else:
-        for scan in Scan.objects.for_user(request.user).all():
+        for scan in Scan.objects.filter(**filter).for_user(request.user).all():
             data.update({scan.updated_at.astimezone(tzlocal.get_localzone()).strftime("%s"): 1})
     return JsonResponse(data)
 
@@ -439,20 +446,16 @@ def get_scan_report_html_api(request, scan_id):
 def get_scan_report_json_api(request, scan_id):
     scan = get_object_or_404(Scan.objects.for_user(request.user), id=scan_id)
 
-    response = JsonResponse(scan.to_dict())
-    response['Content-Disposition'] = 'attachment; filename=scandef_'+str(scan.id)+'.json'
-    return response
+    filename = str(scan.report_filepath)
+    if not os.path.isfile(filename):
+        return HttpResponse(status=404)
 
-    # filename = str(scan.report_filepath)
-    # if not os.path.isfile(filename):
-    #     return HttpResponse(status=404)
-    #
-    # wrapper = FileWrapper(open(filename))
-    # response = HttpResponse(wrapper, content_type='text/plain')
-    # response['Content-Disposition'] = 'attachment; filename=report_'+os.path.basename(filename)
-    # response['Content-Length'] = os.path.getsize(filename)
-    #
-    # return response
+    wrapper = FileWrapper(open(filename))
+    response = HttpResponse(wrapper, content_type='text/plain')
+    response['Content-Disposition'] = 'attachment; filename=report_'+os.path.basename(filename)
+    response['Content-Length'] = os.path.getsize(filename)
+
+    return response
 
 
 @api_view(['GET'])
@@ -573,17 +576,3 @@ def add_retest_finding_scan_def_api(request, finding_id):
 
     _run_scan(scan_def.id, request.user.id)
     return JsonResponse({'status': 'success', 'scan_def_id': scan_def.id})
-
-
-@api_view(['GET'])
-@pro_group_required('ScansManager')
-def evaluate_assets(request, scan_id):
-    assets = []
-    try:
-        scan = get_object_or_404(Scan.objects.for_user(request.user), id=scan_id)
-        for finding in scan.finding_set.all():
-            finding.evaluate_assets()
-    except Exception as e:
-        print(e)
-        return JsonResponse({"status": "error"})
-    return JsonResponse({"status": "success", "assets": assets})

@@ -17,11 +17,18 @@ import base64
 
 @pro_group_required('EnginesManager', 'EnginesViewer')
 def list_engines_view(request):
-    engines = EngineInstance.objects.all().only(
-        "name", "enabled", "status", "api_url", "updated_at"
-    ).annotate(
-        type=F("engine__name")
-    ).order_by('name')
+    if request.user.id==1:
+        engines = EngineInstance.objects.all().only(
+            "name", "enabled", "status", "api_url", "updated_at"
+        ).annotate(
+            type=F("engine__name") #注解别名
+        ).order_by('name')
+    else:
+        engines = EngineInstance.objects.filter(user_id=request.user.id).all().only(
+            "name", "enabled", "status", "api_url", "updated_at"
+        ).annotate(
+            type=F("engine__name")
+        ).order_by('name')
     autorefresh_task = PeriodicTask.objects.filter(name='[PO] Auto-refresh engines status')
     if autorefresh_task.count() > 0:
         autorefresh_status = autorefresh_task.first().enabled
@@ -52,6 +59,7 @@ def add_engine_view(request):
                 'api_key': form.cleaned_data['api_key'],
                 'username': form.cleaned_data['username'],
                 'password': form.cleaned_data['password'],
+                'user_id': request.user.id,
             }
 
             engine = EngineInstance(**engine_args)
@@ -122,8 +130,7 @@ def import_policies_view(request):
             if not os.path.exists(policies_path):
                 os.makedirs(policies_path)
 
-            # policies_file = policies_path + request.FILES['file'].name
-            policies_file = os.path.normpath(os.path.join(policies_path, request.FILES['file'].name))
+            policies_file = policies_path + request.FILES['file'].name
             with open(policies_file, 'wb') as destfile:
                 for chunk in request.FILES['file'].chunks():
                     destfile.write(chunk)

@@ -9,10 +9,10 @@ from django.conf import settings
 from app.settings import LOGGING_LEVEL
 
 SEVERITY_LEVELS = (
-    ('INFO', 'INFO'),
+    ('INFO',    'INFO'),
     ('WARNING', 'WARNING'),
-    ('ERROR', 'ERROR'),
-    ('DEBUG', 'DEBUG')
+    ('ERROR',   'ERROR'),
+    ('DEBUG',   'DEBUG')
 )
 
 EVENT_TYPES = (
@@ -27,8 +27,6 @@ EVENT_TYPES = (
 
 
 class Event(models.Model):
-    """Class definition of Event."""
-
     message = models.CharField(max_length=250)
     description = models.TextField(default="n/a")
     type = models.CharField(choices=EVENT_TYPES, default='UNSPECIFIED', max_length=15)
@@ -41,19 +39,31 @@ class Event(models.Model):
     updated_at = models.DateTimeField(default=timezone.now)
 
     class Meta:
-        """Metadata options."""
-
         db_table = 'events'
 
     def __str__(self):
-        """Return string representation of an Event."""
         return "[{}] {} - {} - {}".format(self.severity, self.message, self.code, self.created_at)
 
     def save(self, *args, **kwargs):
-        """Override save method."""
         if self.severity in LOGGING_LEVEL.split(','):
             self.message = self.message[:250]  # Just to be sure ...
             return super(Event, self).save(*args, **kwargs)
+
+## Alerts
+# Alerts are notification messages displayed on several events:
+# - New finding detected
+# - A finding is missing between 2 scans
+# - A finding reapears
+# - A finding changed (ex: score)
+# ?- A scan is finished (success / fail)
+# ?- An engine changed its operational status
+
+#
+# ALERT_TYPES = (
+#     ('NEW_FINDING', 'New Finding'),
+#     ('MISSING_FINDING', 'Missing Finding'),
+#     ('CHANGE_FINDING', 'Finding change'),
+# )
 
 
 ALERT_SEVERITIES = (
@@ -68,13 +78,6 @@ ALERT_STATUSES = (
     ('new', 'New'),
     ('read', 'Read'),
     ('archived', 'Archived'),
-)
-
-ALERT_TYPES = (
-    ('other', 'Other'),
-    ('new_finding', 'New Finding'),
-    ('missing_finding', 'Missing Finding'),
-    ('reopened_finding', 'Reopened Finding'),
 )
 
 
@@ -115,98 +118,31 @@ class Alert(models.Model):
     severity = models.CharField(choices=ALERT_SEVERITIES, default='info', max_length=10)
     status = models.CharField(choices=ALERT_STATUSES, default='new', max_length=10)
     metadata = JSONField(default=dict)
-    type = models.CharField(choices=ALERT_TYPES, default='other', max_length=20)
     owner = models.ForeignKey(get_user_model(), null=True, on_delete=models.SET_NULL)
     created_at = models.DateTimeField(default=timezone.now)
     updated_at = models.DateTimeField(default=timezone.now)
     teams = models.ManyToManyField('users.team', blank=True)
 
     class Meta:
-        """Metadata options."""
-
         db_table = 'alerts'
 
     def __str__(self):
-        """Return string representation of an Alert."""
         return "[{}] {} - {} - {}".format(self.severity, self.message, self.status, self.created_at)
 
     def save(self, *args, **kwargs):
-        """Override save method."""
         self.message = self.message[:250]  # Just to be sure ...
         return super(Alert, self).save(*args, **kwargs)
 
 
-ALERT_OVERRIDE_ACTIONS = (
-    ('disable-alert', 'Disable alert'),
-    ('set-severity', 'Set custom severity'),
-)
-
-ALERT_OVERRIDE_PARAMS = {
-    'disable-alert': {
-        'filters': {
-            'title__icontains': '###CHANGEME###',
-        },
-        'actions': {
-            'disable-alert': True,
-        },
-    },
-    'set-severity': {
-        'filters': {
-            'title__icontains': '###CHANGEME###',
-        },
-        'actions': {
-            'final_severity': 'info',
-        },
-    },
-}
-
-
-def get_default_alert_override_params():
-    """Return default alert overriding parameters."""
-    return dict(ALERT_OVERRIDE_PARAMS['disable-alert'])
-
-
-class AlertOverride(models.Model):
-    """Class definition of AlertOverride."""
-
-    # Manager
-    objects = AlertManager()
-
-    # Attributes
-    name = models.CharField(max_length=256)
-    enabled = models.BooleanField(default=True)
-    engine_type = models.CharField(max_length=20)
-    action = models.CharField(choices=ALERT_OVERRIDE_ACTIONS, default="disable-alert", max_length=32)
-    params = JSONField(default=get_default_alert_override_params)
-    created_at = models.DateTimeField(default=timezone.now)
-    updated_at = models.DateTimeField(default=timezone.now)
-    teams = models.ManyToManyField('users.team', blank=True)
-
-    class Meta:
-        """Metadata options."""
-
-        db_table = 'alert_override'
-
-    def __str__(self):
-        """Return string representation of an AlertOverride."""
-        return "{}/{}".format(self.id, self.name)
-
-    def save(self, *args, **kwargs):
-        """Update timestamp is not created."""
-        if not self._state.adding:
-            self.updated_at = timezone.now()
-        return super(AlertOverride, self).save(*args, **kwargs)
-
-
 AUDIT_SCOPES = (
-    ('asset', 'Asset'),
-    ('scan', 'Scan'),
-    ('engine', 'Engine'),
+    ('asset',   'Asset'),
+    ('scan',    'Scan'),
+    ('engine',  'Engine'),
     ('finding', 'Finding'),
-    ('user', 'User'),
-    ('rule', 'Rule'),
+    ('user',    'User'),
+    ('rule',    'Rule'),
     ('setting', 'Setting'),
-    ('other', 'Other')
+    ('other',   'Other')
 )
 
 
@@ -223,8 +159,6 @@ class AuditLog(models.Model):
     created_at = models.DateTimeField(default=timezone.now)
 
     class Meta:
-        """Metadata options."""
-
         db_table = 'audit_logs'
 
     def __init__(self, *args, **kwargs):
@@ -233,11 +167,10 @@ class AuditLog(models.Model):
         return super(AuditLog, self).__init__(*args, **kwargs)
 
     def __str__(self):
-        """Return string representation of an AuditLog."""
         return "{}/{}: {} ({})".format(self.scope, self.owner, self.message, self.created_at)
 
     def save(self, *args, **kwargs):
-        """Override save method."""
+
         # Metadata
         try:
             if hasattr(self, 'context') and self.context is not None:

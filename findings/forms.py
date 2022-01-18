@@ -1,8 +1,6 @@
 # -*- coding: utf-8 -*-
 
-import os
 from django import forms
-from django.core.exceptions import ValidationError
 from .models import Finding, FINDING_SEVERITIES
 
 ENGINE_TYPES = (
@@ -11,37 +9,24 @@ ENGINE_TYPES = (
 )
 
 
-def validate_file_extension(value):
-    ext = os.path.splitext(value.name)[1]
-    valid_extensions = ['.xml', '.nessus', '.json']
-    if ext not in valid_extensions:
-        raise ValidationError(u'File not supported!')
-
-
 class ImportFindingsForm(forms.Form):
     class Meta:
         fields = ['engine', 'min_level', 'file']
 
-    engine = forms.CharField(widget=forms.Select(
+    engine = forms.CharField(label="引擎",widget=forms.Select(
         attrs={'class': 'form-control form-control-sm'},
         choices=ENGINE_TYPES))
-    min_level = forms.CharField(widget=forms.Select(
+    min_level = forms.CharField(label="最低严重程度",widget=forms.Select(
         attrs={'class': 'form-control form-control-sm'},
-        choices=FINDING_SEVERITIES),
-        label='Minimum severity')
-    file = forms.FileField(widget=forms.FileInput(
-        attrs={'accept': '.json,.xml,.nessus'}),
-        validators=[validate_file_extension]
-    )
+        choices=FINDING_SEVERITIES))
+    file = forms.FileField(label="文件")
 
 
 class FindingForm(forms.ModelForm):
     class Meta:
         model = Finding
-        fields = [
-            'title', 'type', 'severity', 'status', 'description', 'tags',
-            'solution', 'risk_info', 'vuln_refs', 'links', 'comments', 'asset'
-        ]
+        fields = ['title', 'type', 'severity', 'status', 'description', 'tags',
+            'solution', 'risk_info', 'vuln_refs', 'links', 'comments', 'asset']
         widgets = {
             'description': forms.Textarea(
                 attrs={'class': 'form-control form-control-sm'}),

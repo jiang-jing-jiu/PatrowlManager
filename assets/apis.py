@@ -3,7 +3,6 @@
 from django.http import JsonResponse, HttpResponse, QueryDict
 from django.forms.models import model_to_dict
 from django.utils.encoding import smart_str
-from django.utils.text import slugify
 from django.db.models import Value, CharField, Q, F
 from django.shortcuts import render, redirect, get_object_or_404
 from django.core.files.storage import FileSystemStorage
@@ -173,7 +172,7 @@ def get_asset_trends_api(request, asset_id):
 @api_view(['GET'])
 @pro_group_required('AssetsManager', 'AssetsViewer')
 def list_assets_api(request):
-    q = request.GET.get("q", None)
+    q = request.GET.get("q", None) # q为用户搜索资产的输入，支持搜asset、assetgroup和taggroup的value和name
     team = request.GET.get("team", None)
 
     if q:
@@ -181,8 +180,7 @@ def list_assets_api(request):
                 Q(value__icontains=q) | Q(name__icontains=q)
             ).annotate(
                 format=Value("asset", output_field=CharField())
-            # ).values('id', 'value', 'format', 'name', 'type', 'exposure', 'categories__value', 'assetowner__name').distinct()
-            ).values('id', 'value', 'format', 'name', 'type', 'exposure', 'assetowner__name')
+            ).values('id', 'value', 'format', 'name','type','exposure','categories__value','assetowner__name')
         assetgroups = AssetGroup.objects.for_user(request.user).filter(
                 name__icontains=q
             ).annotate(
@@ -190,39 +188,44 @@ def list_assets_api(request):
             ).annotate(
                 format=Value("assetgroup", output_field=CharField())
             ).values('id', 'value', 'format', 'name')
-        # taggroups = AssetCategory.objects.filter(
-        #         value__icontains=q
-        #     ).annotate(
-        #         name=F("value")
-        #     ).annotate(
-        #         format=Value("taggroup", output_field=CharField())
-        #     ).values('id', 'value', 'format', 'name')
+        taggroups = AssetCategory.objects.filter(
+                value__icontains=q
+            ).annotate(
+                name=F("value")
+            ).annotate(
+                format=Value("taggroup", output_field=CharField())
+            ).values('id', 'value', 'format','name')
     else:
         assets = Asset.objects.for_user(request.user).annotate(
                 format=Value("asset", output_field=CharField())
-            ).values('id', 'value', 'format', 'name', 'type', 'exposure', 'assetowner__name')
+            ).values('id', 'value', 'format', 'name','type','exposure','categories__value','assetowner__name')
         assetgroups = AssetGroup.objects.for_user(request.user).annotate(
                 value=F("name")
             ).annotate(
                 format=Value("assetgroup", output_field=CharField())
             ).values('id', 'value', 'format', 'name')
-        # taggroups = AssetCategory.objects.annotate(
-        #     name=F("value")
-        # ).annotate(
-        #     format=Value("taggroup", output_field=CharField())
-        # ).values('id', 'value', 'format', 'name')
+        taggroups = AssetCategory.objects.annotate(
+            name=F("value")
+        ).annotate(
+            format=Value("taggroup", output_field=CharField())
+        ).values('id', 'value', 'format', 'name')
 
     # Filter by team
     if team is not None and len(team) > 0:
-        assets = assets.filter(teams__in=[team])
-        assetgroups = assetgroups.filter(teams__in=[team])
-        # taggroups = taggroups.filter(teams__in=[team])
+        assets = assets.filter(teams__in=team)
+        assetgroups = assetgroups.filter(teams__in=team)
+        taggroups = taggroups.filter(teams__in=team)
+    
+    # Filter by owner_id 2021.11.28 权限增加 
+    if request.user.id > 1:
+        assets = assets.filter(owner_id=request.user.id)
+        assetgroups = assetgroups.filter(owner_id=request.user.id)
+        #taggroups = taggroups.filter(owner_id=request.user.id)
 
-    assets_list = list(assets.distinct())
-    assetgroups_list = list(assetgroups.distinct())
-    # taggroups_list = list(taggroups.distinct())
-    # return JsonResponse(assets_list + assetgroups_list + taggroups_list, safe=False)
-    return JsonResponse(assets_list + assetgroups_list, safe=False)
+    assets_list = list(assets)
+    assetgroups_list = list(assetgroups)
+    taggroups_list = list(taggroups)
+    return JsonResponse(assets_list + assetgroups_list + taggroups_list, safe=False)
 
 
 @api_view(['GET'])
@@ -236,15 +239,15 @@ def list_only_assets_api(request):
                 Q(value__icontains=q) | Q(name__icontains=q)
             ).annotate(
                 format=Value("asset", output_field=CharField())
-            ).values('id', 'value', 'format', 'name', 'type', 'exposure', 'categories__value', 'assetowner__name')
+            ).values('id', 'value', 'format', 'name','type','exposure','categories__value','assetowner__name')
     else:
         assets = Asset.objects.for_user(request.user).annotate(
                 format=Value("asset", output_field=CharField())
-            ).values('id', 'value', 'format', 'name', 'type', 'exposure', 'categories__value', 'assetowner__name')
+            ).values('id', 'value', 'format', 'name','type','exposure','categories__value','assetowner__name')
 
     # Filter by team
     if team is not None and len(team) > 0:
-        assets = assets.filter(teams__in=[team])
+        assets = assets.filter(teams__in=team)
 
     assets_list = list(assets)
     return JsonResponse(assets_list, safe=False)
@@ -315,13 +318,11 @@ def export_assets_api(request, assetgroup_id=None):
         scope='asset', type='assets_export_csv', owner=request.user, context=request)
     response = HttpResponse(content_type='text/csv')
     response['Content-Disposition'] = 'attachment; filename="patrowl_assets.csv"'
-
     writer = csv.writer(response, delimiter=';')
 
     assets = []
     if assetgroup_id:
         asset_group = AssetGroup.objects.for_user(request.user).get(id=assetgroup_id)
-        response['Content-Disposition'] = 'attachment; filename="patrowl_assetgroup_{}.csv"'.format(slugify(asset_group.name))
         for asset in asset_group.assets.all():
             assets.append(asset)
     else:
@@ -329,7 +330,7 @@ def export_assets_api(request, assetgroup_id=None):
 
     writer.writerow([
         'asset_value', 'asset_name', 'asset_type', 'asset_description',
-        'asset_criticality', 'asset_tags', 'owner', 'team', 'asset_exposure', 'created_at'])
+        'asset_criticity', 'asset_tags', 'owner', 'team', 'asset_exposure', 'created_at'])
     for asset in assets:
         try:
             asset_owner = asset.owner.username
@@ -357,12 +358,13 @@ def export_assetgroups_api(request):
         message="Export asset groups as CSV file".format(request.user),
         scope='asset', type='assetgroups_export_csv', owner=request.user, context=request)
     response = HttpResponse(content_type='text/csv')
-    response['Content-Disposition'] = 'attachment; filename="patrowl_asset_groups.csv"'
+    response['Content-Disposition'] = 'attachment; filename="patrowl_assets.csv"'
     writer = csv.writer(response, delimiter=';')
 
     writer.writerow([
+        'assetgroup_name',
         'asset_value', 'asset_name', 'asset_type', 'asset_description',
-        'asset_criticality', 'asset_groupname', 'asset_tags', 'owner', 'team', 'asset_exposure',
+        'asset_criticity', 'asset_tags', 'owner', 'team', 'asset_exposure',
         'created_at'])
 
     for assetgroup in AssetGroup.objects.for_user(request.user).all().order_by('name'):
@@ -373,12 +375,12 @@ def export_assetgroups_api(request):
                 asset_owner = ""
 
             writer.writerow([
+                smart_str(assetgroup.name),
                 smart_str(asset.value),
                 asset.name,
                 asset.type,
                 smart_str(asset.description),
                 asset.criticity,
-                smart_str(assetgroup.name),
                 ",".join([a.value for a in asset.categories.all()]),
                 asset_owner,
                 ",".join([t.name for t in asset.teams.all()]),
@@ -690,7 +692,7 @@ def get_asset_report_json_api(request, asset_id):
         'asset': asset_dict,
         'findings': findings_tmp,
         'findings_stats': findings_stats
-    }, safe=False)
+        }, safe=False)
 
 
 @api_view(['GET'])
@@ -787,7 +789,7 @@ def get_asset_group_report_json_api(request, asset_group_id):
 def get_asset_group_report_csv_api(request, asset_group_id):
     asset_group = get_object_or_404(AssetGroup.objects.for_user(request.user).prefetch_related("assets"), id=asset_group_id)
     response = HttpResponse(content_type='text/csv')
-    response['Content-Disposition'] = 'attachment; filename="patrowl_assetgroup_{}.csv"'.format(slugify(asset_group.name))
+    response['Content-Disposition'] = 'attachment; filename="patrowl_assetgroup_{}.csv"'.format(asset_group_id)
     writer = csv.writer(response, delimiter=';')
     writer.writerow([
         'asset_value',

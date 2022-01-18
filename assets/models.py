@@ -22,30 +22,30 @@ import logging
 import os
 
 ASSET_TYPES = (
-    ('ip', 'ip'),
-    ('ip-range', 'ip-range'),       # 192.168.1.0-256
-    ('ip-subnet', 'ip-subnet'),     # 192.168.1.0/24
-    ('fqdn', 'fqdn'),
-    ('domain', 'domain'),
-    ('url', 'url'),
-    ('keyword', 'keyword'),
-    ('person', 'person'),
-    ('organisation', 'organisation'),
-    ('path', 'path'),
-    ('application', 'application'),
+    ('ip', 'ip地址'),
+    ('ip-range', 'ip-范围(192.168.1.0-192.168.1.256)'),       # 192.168.1.0-256
+    ('ip-subnet', 'ip-子网(192.168.1.0/24)'),     # 192.168.1.0/24
+    ('fqdn', '全限定域名(fqdn)'),
+    ('domain', '域名'),
+    ('url', '网址'),
+    ('keyword', '关键字'),
+    ('person', '负责人(person)'),
+    ('organisation', '组织(organisation)'),
+    ('path', '路径(path)'),
+    ('application', '应用(application)'),
 )
 
 ASSET_CRITICITIES = (
-    ('low', 'low'),
-    ('medium', 'medium'),
-    ('high', 'high'),
+    ('low', '低'),
+    ('medium', '中'),
+    ('high', '高'),
 )
 
 ASSET_EXPOSURES = (
-    ('unknown', 'Unknown'),
-    ('external', 'External'),
-    ('internal', 'Internal'),
-    ('restricted', 'Restricted'),
+    ('unknown', '未知'),
+    ('external', '外部的'),
+    ('internal', '内部的'),
+    ('restricted', '受限制的'),
 )
 
 TLP_COLORS = (
@@ -197,24 +197,23 @@ class Asset(models.Model):
     # Manager
     objects = AssetManager()
 
-    # Attributes
-    value = models.TextField(max_length=2048, unique=True, null=False)
-    name = models.TextField(max_length=2048)
-    type = models.CharField(choices=ASSET_TYPES, default='ip', max_length=15)  # ipv4, ipv6, domain, fqdn, url
-    criticity = models.CharField(choices=ASSET_CRITICITIES, default='low', max_length=10)  # low, medium, high
-    exposure = models.CharField(choices=ASSET_EXPOSURES, default='unknown', max_length=16)  # unknown, external, internal, restricted
-    risk_level = JSONField(default=get_default_risk_level)
-    owner = models.ForeignKey(get_user_model(), null=True, blank=True, on_delete=models.SET_NULL)
-    description = models.CharField(max_length=256, null=True, blank=True)
-    status = models.CharField(max_length=30, null=True, blank=True, default="new")
-    categories = models.ManyToManyField(AssetCategory)
-    created_at = models.DateTimeField(default=timezone.now)
-    updated_at = models.DateTimeField(default=timezone.now)
-    teams = models.ManyToManyField('users.team', blank=True)
+    # AttributesFalse
+    value       = models.TextField(max_length=2048, unique=False, null=False,verbose_name="资产值") #二级用，取消资产唯一
+    name        = models.TextField(max_length=2048,verbose_name="名称")
+    type        = models.CharField(choices=ASSET_TYPES, default='ip', max_length=15)  # ipv4, ipv6, domain, fqdn, url
+    criticity   = models.CharField(choices=ASSET_CRITICITIES, default='low', max_length=10,verbose_name='等级')  # low, medium, high
+    exposure    = models.CharField(choices=ASSET_EXPOSURES, default='unknown', max_length=16)  # unknown, external, internal, restricted
+    risk_level  = JSONField(default=get_default_risk_level)
+    owner       = models.ForeignKey(get_user_model(), null=True, blank=True, on_delete=models.SET_NULL)
+    description = models.CharField(max_length=256, null=True, blank=True,verbose_name="描述")
+    status      = models.CharField(max_length=30, null=True, blank=True, default="new")
+    categories  = models.ManyToManyField(AssetCategory, verbose_name="分类")
+    created_at  = models.DateTimeField(default=timezone.now)
+    updated_at  = models.DateTimeField(default=timezone.now)
+    teams       = models.ManyToManyField('users.team', blank=True)
 
     class Meta:
         """Metadata: DB name."""
-
         db_table = 'assets'
 
     @classmethod
@@ -238,12 +237,12 @@ class Asset(models.Model):
         return json.loads(json.dumps(data, default=json_serial))
 
     def set_criticity(self, criticity):
-        """Update the 'criticity' field."""
+        """Update the 'criticity' field"""
         self.criticity = criticity
         return super(Asset, self).save()
 
     def set_status(self, status):
-        """Update the 'status' field."""
+        """Update the 'status' field"""
         self.status = status
         return super(Asset, self).save()
 
@@ -296,7 +295,7 @@ class Asset(models.Model):
             findings = self.finding_set.filter(created_at__lte=enddate).values("severity", "status")
 
         for finding in findings:
-            if finding['status'] not in ["false-positive", "duplicate", "closed", "mitigated", "undone", "patched"]:
+            if finding['status'] not in ["false-positive", "duplicate"]:
                 risk_level['total'] = risk_level.get('total', 0) + 1
                 risk_level[finding['severity']] = risk_level.get(finding['severity'], 0) + 1
         if risk_level['critical'] == 0 and risk_level['high'] == 0 and risk_level['medium'] == 0 and risk_level['low'] == 0 and risk_level['info'] == 0:
@@ -414,17 +413,17 @@ class AssetGroup(models.Model):
     objects = AssetGroupManager()
 
     # Attributes
-    assets = models.ManyToManyField(Asset)
-    name = models.CharField(max_length=256, unique=True)
-    criticity = models.CharField(choices=ASSET_CRITICITIES, default='low', max_length=10)
-    risk_level = JSONField(default=get_default_risk_level)
-    owner = models.ForeignKey(get_user_model(), null=True, on_delete=models.SET_NULL)
+    assets      = models.ManyToManyField(Asset)
+    name        = models.CharField(max_length=256, unique=True)
+    criticity   = models.CharField(choices=ASSET_CRITICITIES, default='None', max_length=10)
+    risk_level  = JSONField(default=get_default_risk_level)
+    owner       = models.ForeignKey(get_user_model(), null=True, on_delete=models.SET_NULL)
     description = models.CharField(max_length=256, null=True, blank=True)
-    status = models.CharField(max_length=30, null=True, blank=True)
-    categories = models.ManyToManyField(AssetCategory, blank=True)
-    created_at = models.DateTimeField(default=timezone.now)
-    updated_at = models.DateTimeField(default=timezone.now)
-    teams = models.ManyToManyField('users.team', blank=True)
+    status      = models.CharField(max_length=30, null=True, blank=True)
+    categories  = models.ManyToManyField(AssetCategory, blank=True)
+    created_at  = models.DateTimeField(default=timezone.now)
+    updated_at  = models.DateTimeField(default=timezone.now)
+    teams       = models.ManyToManyField('users.team', blank=True)
 
     class Meta:
         db_table = 'asset_groups'
@@ -564,16 +563,16 @@ def assetgroup_delete_log(sender, **kwargs):
 
 
 class AssetOwnerContact(models.Model):
-    name = models.CharField(max_length=256)
+    name       = models.CharField(max_length=256)
     department = models.CharField(max_length=256, null=True, blank=True)
-    title = models.CharField(max_length=256, null=True, blank=True)
-    email = models.EmailField(null=True, blank=True)
-    phone = models.CharField(max_length=20, null=True, blank=True)
-    address = models.CharField(max_length=256, null=True, blank=True)
-    url = models.URLField(null=True, blank=True)
-    comments = models.CharField(max_length=256, null=True, blank=True)
+    title      = models.CharField(max_length=256, null=True, blank=True)
+    email      = models.EmailField(null=True, blank=True)
+    phone      = models.CharField(max_length=20, null=True, blank=True)
+    address    = models.CharField(max_length=256, null=True, blank=True)
+    url        = models.URLField(null=True, blank=True)
+    comments   = models.CharField(max_length=256, null=True, blank=True)
     # owner      = models.ForeignKey(User, null=True, on_delete=models.SET_NULL)
-    owner = models.ForeignKey(get_user_model(), null=True, on_delete=models.SET_NULL)
+    owner      = models.ForeignKey(get_user_model(), null=True, on_delete=models.SET_NULL)
     created_at = models.DateTimeField(default=timezone.now)
     updated_at = models.DateTimeField(default=timezone.now)
 
@@ -618,14 +617,14 @@ def assetownercontact_delete_log(sender, **kwargs):
 
 
 class AssetOwnerDocument(models.Model):
-    file = models.FileField(null=True, blank=True)
-    doctitle = models.CharField(max_length=256, null=True, blank=True)
-    filename = models.CharField(max_length=256, null=True, blank=True)
-    filepath = models.CharField(max_length=256, null=True, blank=True)
-    tlp_color = models.CharField(choices=TLP_COLORS, default='red', max_length=10)
-    comments = models.CharField(max_length=256, null=True, blank=True)
+    file       = models.FileField(null=True, blank=True)
+    doctitle   = models.CharField(max_length=256, null=True, blank=True)
+    filename   = models.CharField(max_length=256, null=True, blank=True)
+    filepath   = models.CharField(max_length=256, null=True, blank=True)
+    tlp_color  = models.CharField(choices=TLP_COLORS, default='red', max_length=10)
+    comments   = models.CharField(max_length=256, null=True, blank=True)
     # owner      = models.ForeignKey(User, null=True, on_delete=models.SET_NULL)
-    owner = models.ForeignKey(get_user_model(), null=True, on_delete=models.SET_NULL)
+    owner      = models.ForeignKey(get_user_model(), null=True, on_delete=models.SET_NULL)
     created_at = models.DateTimeField(default=timezone.now)
     updated_at = models.DateTimeField(default=timezone.now)
 
@@ -666,14 +665,14 @@ def assetownerdoc_delete_log(sender, **kwargs):
 
 
 class AssetOwner(models.Model):
-    assets = models.ManyToManyField(Asset)
-    contacts = models.ManyToManyField(AssetOwnerContact)
-    documents = models.ManyToManyField(AssetOwnerDocument)
+    assets     = models.ManyToManyField(Asset)
+    contacts   = models.ManyToManyField(AssetOwnerContact)
+    documents  = models.ManyToManyField(AssetOwnerDocument)
     # owner      = models.ForeignKey(User, null=True, on_delete=models.SET_NULL)
-    owner = models.ForeignKey(get_user_model(), null=True, on_delete=models.SET_NULL)
-    name = models.CharField(max_length=256)
-    url = models.URLField(null=True, blank=True)
-    comments = models.CharField(max_length=256, null=True, blank=True)
+    owner      = models.ForeignKey(get_user_model(), null=True, on_delete=models.SET_NULL)
+    name       = models.CharField(max_length=256)
+    url        = models.URLField(null=True, blank=True)
+    comments   = models.CharField(max_length=256, null=True, blank=True)
     created_at = models.DateTimeField(default=timezone.now)
     updated_at = models.DateTimeField(default=timezone.now)
 
@@ -795,7 +794,7 @@ ASSET_INVESTIGATION_LINKS = [
     },
     {
         "name": "URLVoid",
-        "link": "https://www.urlvoid.com/scan/%asset%",
+        "link": "http://www.urlvoid.com/scan/%asset%",
         "datatypes": ["url"]
     },
     {
@@ -825,7 +824,7 @@ ASSET_INVESTIGATION_LINKS = [
     },
     {
         "name": "Whois",
-        "link": "https://whois.domaintools.com/%asset%",
+        "link": "http://whois.domaintools.com/%asset%",
         "datatypes": ["domain", "ip"]
     },
     {

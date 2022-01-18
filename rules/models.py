@@ -23,62 +23,65 @@ RULE_SCOPES = (
     ('asset', 'Asset'),
     ('finding', 'Finding'),
     ('scan', 'Scan'),
-    # ('alert', 'Alert'),
+    ('alert', 'Alert'),
 )
 
 RULE_SCOPE_ATTRIBUTES = {
     "asset": {
         # 'value':        {"type": "numeric"},
-        'value': {"type": "text"},
-        'name': {"type": "text"},
-        'type': {"type": "list", "values": ['ip', 'domain', 'url']},
-        'description': {"type": "text"},
-        'criticity': {"type": "list", "values": ['low', 'medium', 'high']}
-    },
+        'value':        {"type": "text"},
+        'name':         {"type": "text"},
+        'type':         {"type": "list", "values": ['ip', 'domain', 'url']},
+        'description':  {"type": "text"},
+        'criticity':    {"type": "list", "values": ['low', 'medium', 'high']}
+        },
     "finding": {
-        'title': {"type": "text"},
-        'description': {"type": "text"},
-        'type': {"type": "text"},
-        'hash': {"type": "text"},
-        'solution': {"type": "text"},
-        'severity': {"type": "list", "values": ['info', 'low', 'medium', 'high', 'critical']},
-        'status': {"type": "list", "values": ['new', 'ack', 'mitigated', 'confirmed', 'patched', 'closed', 'false-positive', 'undone', 'duplicate', 'reopened']},
+        'title':        {"type": "text"},
+        'description':  {"type": "text"},
+        'type':         {"type": "text"},
+        'hash':         {"type": "text"},
+        'solution':     {"type": "text"},
+        'severity':     {"type": "list", "values": ['info', 'low', 'medium', 'high', 'critical']},
+        'status':       {"type": "list", "values": ['new', 'ack']},
         # 'tags':         {"type": "in_list"},
-    },
+        },
     "scan": {
         'status': {"type": "text"},
     },
-    # "alert": {
-    #     'title': {"type": "text"},
-    #     'severity': {"type": "list", "values": ['info', 'low', 'medium', 'high', 'critical']},
-    #     'status': {"type": "list", "values": ['new', 'read', 'archived']},
-    # },
+    "alert": {
+        'title': {"type": "text"},
+        'severity': {"type": "list", "values": ['info', 'low', 'medium', 'high', 'critical']},
+        'status': {"type": "list", "values": ['new', 'read', 'archived']},
+    },
 }
 
 RULE_TARGETS = (
-    ('email', 'Send email'),
-    ('thehive', 'TheHive event'),
-    ('slack', 'Slack notification'),
-    ('alert', 'Patrowl alert'),
+    # ('event',   'Patrowl event'),
+    # ('logfile', 'To logfile'),
+    ('email',   'Send email'),
+    ('thehive', 'TheHive Event'),
+    # ('splunk',  'To Splunk'),
+    ('slack',   'Slack'),
+    ('alert',   'Alert'),
 )
 
 RULE_TRIGGERS = (
     ('ondemand', 'On-demand'),
-    ('auto', 'Auto'),
+    ('auto',     'Auto'),
     ('periodic', 'Periodic'),  # frequency ?
 )
 
 RULE_CONDITIONS = {
     'text': {
-        "__iexact": "is exactly",
-        "__icontains": "contains",
+        "__iexact":      "is exactly",
+        "__icontains":   "contains",
         "__istartswith": "starts with",
-        "__iendswith": "ends with",
+        "__iendswith":   "ends with",
     },
     'numeric': {
-        "__gt": "greater than",
+        "__gt":  "greater than",
         "__gte": "greater than/equal to",
-        "__lt": "less than",
+        "__lt":  "less than",
         "__lte": "less than/equal to",
     },
     'list': None,  # see values
@@ -94,22 +97,22 @@ RULE_SEVERITIES = (
 
 
 class Rule(models.Model):
-    title = models.CharField(max_length=256)
-    comments = models.CharField(max_length=256, default='n/a')
-    scope = models.CharField(choices=RULE_SCOPES, default='finding', max_length=10)
-    scope_attr = models.CharField(max_length=20, null=True, blank=True)
-    condition = JSONField(null=True, blank=True)
-    target = models.CharField(choices=RULE_TARGETS, default='event', max_length=10)
-    severity = models.CharField(choices=RULE_SEVERITIES, default='Low', max_length=10)
-    trigger = models.CharField(choices=RULE_TRIGGERS, default='auto', max_length=10)
-    trigger_attr = models.CharField(max_length=20, null=True, blank=True)
-    summary = JSONField(null=True, blank=True)
-    periodic_task = models.ForeignKey(PeriodicTask, null=True, blank=True, on_delete=models.CASCADE)
-    enabled = models.BooleanField(default=False)
-    nb_matches = models.IntegerField(default=0)
-    owner = models.ForeignKey(get_user_model(), on_delete=models.SET_NULL, null=True, blank=True)
-    created_at = models.DateTimeField(default=timezone.now)
-    updated_at = models.DateTimeField(default=timezone.now)
+    title            = models.CharField(max_length=256)
+    comments         = models.CharField(max_length=256, default='n/a')
+    scope            = models.CharField(choices=RULE_SCOPES, default='finding', max_length=10)
+    scope_attr       = models.CharField(max_length=20, null=True, blank=True)
+    condition        = JSONField(null=True, blank=True)
+    target           = models.CharField(choices=RULE_TARGETS, default='event', max_length=10)
+    severity         = models.CharField(choices=RULE_SEVERITIES, default='Low', max_length=10)
+    trigger          = models.CharField(choices=RULE_TRIGGERS, default='auto', max_length=10)
+    trigger_attr     = models.CharField(max_length=20, null=True, blank=True)
+    summary          = JSONField(null=True, blank=True)
+    periodic_task    = models.ForeignKey(PeriodicTask, null=True, blank=True, on_delete=models.CASCADE)
+    enabled          = models.BooleanField(default=False)
+    nb_matches       = models.IntegerField(default=0)
+    owner            = models.ForeignKey(get_user_model(), on_delete=models.SET_NULL, null=True, blank=True)
+    created_at       = models.DateTimeField(default=timezone.now)
+    updated_at       = models.DateTimeField(default=timezone.now)
 
     class Meta:
         db_table = 'rules'
@@ -130,8 +133,8 @@ class Rule(models.Model):
             send_slack_message(self, message)
         elif self.target == 'thehive':
             send_thehive_message(self, message, asset, description)
-        # elif self.target == 'alert':
-        #     send_alert_message(self, message, description, finding)
+        elif self.target == 'alert':
+            send_alert_message(self, message, description, finding)
         elif self.target == 'event':
             Event.objects.create(
                 message="[Alert][Rule={}]{}".format(self.title, message),
@@ -193,12 +196,9 @@ def send_alert_message(rule, message, description, finding):
         metadata={
             "finding_id": finding.id,
             "finding_title": finding.title,
-            "finding_tags": finding.tags,
             "scan_id": finding.scan.id,
-            "scan_definition_id": finding.scan.scan_definition.id,
             "asset_name": finding.asset_name,
-            "asset_id": finding.asset.id,
-            "asset_tags": [t.value for t in finding.asset.categories.all()],
+            "asset_id": finding.asset.id
         },
         owner=finding.owner
     )
@@ -292,15 +292,15 @@ def send_thehive_message(rule, message, asset, description):
         artifacts = [THAlertArtifact(dataType=asset.type, data=asset.value)]
         try:
             alert = THAlert(
-                title=alert_message,
-                tlp=tlp,
-                severity=rule_severity,
-                tags=['src:PatrOwl'],
-                description=description,
-                type='external',
-                source=thehive_user.value,
-                sourceRef=sourceRef,
-                artifacts=artifacts)
+                        title=alert_message,
+                        tlp=tlp,
+                        severity=rule_severity,
+                        tags=['src:PatrOwl'],
+                        description=description,
+                        type='external',
+                        source=thehive_user.value,
+                        sourceRef=sourceRef,
+                        artifacts=artifacts)
 
             response = api.create_alert(alert)
 

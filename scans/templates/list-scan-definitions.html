@@ -3,10 +3,10 @@
 {% block content %}
 
 <ul class="breadcrumb">
-  <li><a href="/scans/list">scans</a></li>
+  <li><a href="/scans/list">扫描</a></li>
 
   {% if PRO_EDITION %}
-    <li class="active">
+    <li class="active" style="display: none">
       Team:
       <select id="team_select" class="form-control form-control-xs" style="width:auto; display:inline-block; padding:0;">
         <option value="-1" selected>All</option>
@@ -16,12 +16,12 @@
       </select>
     </li>
     {% if request.user.is_superuser or request.user|has_role:"MANAGER" or request.user|has_role:"ANALYST" %}
-    <li class="active">definitions [<a href="/scans/defs/add">+ Add new</a>]</li>
+    <li class="active">任务 [<a href="/scans/defs/add">+ 新增</a>]</li>
     {% else %}
-    <li class="active">definitions </li>
+    <li class="active">任务 </li>
     {% endif %}
   {% else %}
-  <li class="active">definitions [<a href="/scans/defs/add">+ Add new</a>]</li>
+  <li class="active">任务 [<a href="/scans/defs/add">+ 新增</a>]</li>
   {% endif %}
 </ul>
 
@@ -30,13 +30,13 @@
     <thead>
       <tr>
         <th data-field="cb"><input type="checkbox" onClick="toggle(this, 'asset')" /></th>
-        <th scope="col">Title</th>
-        <th scope="col"># Scans</th>
-        <th scope="col">Scan Type</th>
-        <th scope="col">Engine</th>
-        <th scope="col">Status</th>
-        <th scope="col">Last update</th>
-        <th scope="col">Actions</th>
+        <th>标题</th>
+        <th># 扫描</th>
+        <th>扫描类型</th>
+        <th>引擎</th>
+        <th>状态</th>
+        <th>上次更新</th>
+        <th>操作</th>
       </tr>
     </thead>
     <tbody>
@@ -140,24 +140,24 @@
     </ul>
   </div>
   <br/>
-  <a href="/scans/list">+ View performed scans</a><br/>
+  <a href="/scans/list">+ 查看已执行扫描</a><br/>
 
   {% if PRO_EDITION %}
     {% if request.user.is_superuser or request.user|has_role:"MANAGER" or request.user|has_role:"ANALYST" %}
     <a href="/scans/defs/add">+ Add a new scan definition</a><br/>
-    <a href="{% url 'export_scan_definitions_api' %}" class="text-warning">* Export all</a><br/>
-    <a class="btn-delete-selected text-danger" href="#">! Delete selected scans (no confirm)</a><br/>
+    <a href="{% url 'export_scan_definitions_api' %}" class="text-warning">* 导出所有</a><br/>
+    <a class="btn-delete-selected text-danger" href="#">! 删除所选扫描（无确认）</a><br/>
     {% endif %}
   {% else %}
-  <a href="{% url 'export_scan_definitions_api' %}" class="text-warning">* Export all</a><br/>
-  <a class="btn-delete-selected text-danger" href="#">! Delete selected scans (no confirm)</a><br/>
+  <a href="{% url 'export_scan_definitions_api' %}" class="text-warning">* 导出所有</a><br/>
+  <a class="btn-delete-selected text-danger" href="#">! 删除所选扫描（无确认）</a><br/>
   {% endif %}
   <br/>
 
   {% if messages %}
   <ul class="messages">
       {% for message in messages %}
-      <li {% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message }}</li>
+      <li{% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message }}</li>
       {% endfor %}
   </ul>
   {% endif %}
@@ -173,7 +173,7 @@
           <span aria-hidden="true">&times;</span>
           <span class="sr-only">Close</span>
         </button>
-        <h4 class="modal-title" id="myModalLabel">Delete Scan Definition</h4>
+        <h4 class="modal-title" id="myModalLabel">删除扫描定义</h4>
       </div>
 
       <!-- Modal Body -->
@@ -181,9 +181,9 @@
         <div id="delete-scan-def">
           <!-- Content -->
         </div>
-        Confirm Deleting?
-        <button type="button" class="btn btn-xs btn-warning btn-delete-scan-def" data-dismiss="modal">Yes</button>
-        <button type="button" class="btn btn-xs btn-primary" data-dismiss="modal">No</button>
+        确认删除?
+        <button type="button" class="btn btn-xs btn-warning btn-delete-scan-def" data-dismiss="modal">是</button>
+        <button type="button" class="btn btn-xs btn-primary" data-dismiss="modal">否</button>
       </div>
     </div>
   </div>
@@ -244,7 +244,7 @@
     // Run direct scan now Event
     $("#modal-run-scan").on('show.bs.modal', function (e) {
       scan_title = e.relatedTarget.getAttribute('scan-title');
-      $("div#run-scan").html("Scan started: <b>"+escapeHtml(scan_title)+"</b><br/><br/>");
+      $("div#run-scan").html("Scan started: <b>"+scan_title+"</b><br/><br/>");
 
       //Hide the modal 3 seconds later
       var myModal = $(this);
@@ -283,7 +283,7 @@
       scan_id = e.relatedTarget.getAttribute('scan-id');
       scan_title = e.relatedTarget.getAttribute('scan-title');
       $("div#delete-scan-def").attr('scan-id', scan_id);
-      $("div#delete-scan-def").html("Title: <b>"+escapeHtml(scan_title)+"</b><br/><br/>");
+      $("div#delete-scan-def").html("标题: <b>"+scan_title+"</b><br/><br/>");
     });
     $("button.btn-delete-scan-def").on('click', function (e) {
       scan_id = $("div#delete-scan-def").attr('scan-id');

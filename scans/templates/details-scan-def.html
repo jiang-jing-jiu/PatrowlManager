@@ -4,26 +4,26 @@
 
 
 <ul class="breadcrumb">
-  <li><a href="{% url 'list_scans_view' %}">scans</a></li>
-  <li><a href="{% url 'list_scan_def_view' %}">definition</a></li>
-  <li class="active"> {{ scan_def.title }} [<a href="javascript:goBack()">back</a>]</li>
+  <li><a href="{% url 'list_scans_view' %}">扫描</a></li>
+  <li><a href="{% url 'list_scan_def_view' %}">任务</a></li>
+  <li class="active"> {{ scan_def.title }} [<a href="javascript:goBack()">返回</a>]</li>
 </ul>
 <div class="container-fluid">
   <div class="col-sm-5">
     <dl class="dl-horizontal">
-      <dt>Title</dt>
+      <dt>标题</dt>
       <dd>
         {% if PRO_EDITION %}
           {% if request.user.is_superuser or request.user|has_role:"MANAGER" or request.user|has_role:"ANALYST" %}
-          {{ scan_def.title }} [<a href="/scans/defs/edit/{{ scan_def.id }}">edit</a>]
+          <a href="/scans/defs/edit/{{ scan_def.id }}">{{ scan_def.title }}</a>
           {% else %}
           <a href="/scans/defs/list">{{ scan_def.title }}</a>
           {% endif %}
         {% else %}
-        {{ scan_def.title }} [<a href="/scans/defs/edit/{{ scan_def.id }}">edit</a>]
+        <a href="/scans/defs/edit/{{ scan_def.id }}">{{ scan_def.title }}</a>
         {% endif %}
       </dd>
-      <dt>Assets</dt>
+      <dt>资产</dt>
       <dd>
         {% if scan_def.assets_list.all|join:", "|length > 128 %}
           {{ scan_def.assets_list.all|join:", "|truncatechars:128 }} <a data-toggle="modal" data-target="#modal-showall-assets">show all</a><br/>
@@ -43,15 +43,15 @@
           {% endfor %}
         {% endif %}
       </dd>
-      <dt>Scan Type</dt>
+      <dt>扫描类型</dt>
       <dd>{{ scan_def.scan_type }}
         {% if scan_def.scan_type == 'periodic' %}
         (every {{ scan_def.every }} {{ scan_def.period }})
         {% endif %}
       </dd>
-      <dt>Engine</dt>
+      <dt>引擎</dt>
       <dd>{{ scan_def.engine_type.name }}</dd>
-      <dt>Policy</dt>
+      <dt>策略</dt>
       <dd>
         {% if PRO_EDITION %}
           {% if request.user.is_superuser or request.user|has_role:"MANAGER" or request.user|has_role:"ANALYST" %}
@@ -63,17 +63,17 @@
         <a href="/engines/policies/edit/{{ scan_def.engine_policy_id }}">{{ scan_def.engine_policy.name }}</a>
         {% endif %}
       </dd>
-      <dt>Teams</dt>
+      <dt>团队</dt>
       <dd>{{ scan_def.teams.all|join:", " }}</dd>
-      <dt>Owner</dt>
+      <dt>所有者</dt>
       <dd>{{ scan_def.owner.username }}</dd>
-      <dt>Created at</dt>
+      <dt>创建时间</dt>
       <dd>{{ scan_def.created_at | date:"Y/m/d\-H:i:s" }}</dd>
       {% if scan_def.scheduled_at %}
       <dt>Scheduled at</dt>
       <dd>{{ scan_def.scheduled_at | date:"Y/m/d\-H:i:s" }}</dd>
       {% endif %}
-      <dt>Scans performed</dt>
+      <dt>运转次数</dt>
       <dd>{{ scan_def.scan_set.all.count }}
         {% if PRO_EDITION %}
           {% if request.user.is_superuser or request.user|has_role:"MANAGER" or request.user|has_role:"ANALYST" %}
@@ -101,10 +101,10 @@
     </dl>
   </div>
   <select id="chart-selection">
-    <option value="5" selected>Last 5 scans</option>
-    <option value="10">Last 10 scans</option>
-    <option value="20">Last 20 scans</option>
-    <option value="40">Last 40 scans</option>
+    <option value="5" selected>最后5次扫描</option>
+    <option value="10">最后10次扫描</option>
+    <option value="20">最后20次扫描</option>
+    <option value="40">最后20次扫描</option>
   </select>
   <div class="col-sm-7">
     <canvas id="chart-findingsByScanDef" style="height: 180px;"/>
@@ -114,33 +114,33 @@
 <div class="container">
   <div class="dropdown">
     <button class="btn btn-primary btn-xs dropdown-toggle" type="button" id="dropdown-menu-actions" data-toggle="dropdown" aria-haspopup="true" aria-expanded="true">
-      Actions
+      操作
       <span class="caret"></span>
     </button>
     <ul class="dropdown-menu" aria-labelledby="dropdown-menu-actions">
-      <li><a class="btn-compare-selected" href="#">Compare selected scans (2 scans max.)</a></li>
+      <li><a class="btn-compare-selected" href="#">比较所选扫描(最多2次扫描)</a></li>
 
       {% if PRO_EDITION %}
         {% if request.user.is_superuser or request.user|has_role:"MANAGER" or request.user|has_role:"ANALYST" %}
-        <li><a class="btn-stop-selected" href="#">Stop selected scans (no confirm)</a></li>
-        <li><a class="btn-delete-selected" href="#">Delete selected scans (no confirm)</a></li>
+        <li><a class="btn-stop-selected" href="#">停止所选扫描(无确认)</a></li>
+        <li><a class="btn-delete-selected" href="#">删除所选扫描(无确认)</a></li>
         {% endif %}
       {% else %}
-      <li><a class="btn-stop-selected" href="#">Stop selected scans (no confirm)</a></li>
-      <li><a class="btn-delete-selected" href="#">Delete selected scans (no confirm)</a></li>
+      <li><a class="btn-stop-selected" href="#">停止所选扫描(无确认)</a></li>
+      <li><a class="btn-delete-selected" href="#">删除所选扫描(无确认)</a></li>
       {% endif %}
     </ul>
   </div>
   <table class="table table-hover" id="table">
     <thead>
       <tr>
-        <th scope="col"><input type="checkbox" onClick="toggle(this)" /></th>
-        <th scope="col">ID</th>
-        <th scope="col">Run at</th>
-        <th scope="col">Findings</th>
-        <th scope="col">Report</th>
-        <th scope="col">Status</th>
-        <th scope="col">Actions</th>
+        <th><input type="checkbox" onClick="toggle(this)" /></th>
+        <th>ID</th>
+        <th>运行时间</th>
+        <th>扫描结果</th>
+        <th>导出</th>
+        <th>状态</th>
+        <th>操作</th>
       </tr>
     </thead>
     <tbody>
@@ -269,7 +269,7 @@
   {% if messages %}
   <ul class="messages">
       {% for message in messages %}
-      <li {% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message }}</li>
+      <li{% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message }}</li>
       {% endfor %}
   </ul>
   {% endif %}
@@ -376,7 +376,7 @@
           <span aria-hidden="true">&times;</span>
           <span class="sr-only">Close</span>
         </button>
-        <h4 class="modal-title" id="myModalLabel">Delete Scan</h4>
+        <h4 class="modal-title" id="myModalLabel">删除扫描</h4>
       </div>
 
       <!-- Modal Body -->
@@ -384,9 +384,9 @@
         <div id="delete-scan">
           <!-- Content -->
         </div>
-        Confirm Deleting?
-        <button type="button" class="btn btn-xs btn-danger btn-delete-scan" data-dismiss="modal">Yes</button>
-        <button type="button" class="btn btn-xs btn-primary" data-dismiss="modal">No</button>
+        確定刪除?
+        <button type="button" class="btn btn-xs btn-danger btn-delete-scan" data-dismiss="modal">是</button>
+        <button type="button" class="btn btn-xs btn-primary" data-dismiss="modal">否</button>
       </div>
     </div>
   </div>
@@ -515,40 +515,40 @@ function print_chart(num_records=20){
     config["data"]["datasets"].push(
       {
         "type": 'line',
-        "label": "Total",
+        "label": "总数",
         "data": data_datasets_total,
         "fill": false, "lineTension": 0.1, "borderColor": "#000000",
         "yAxisID": "not-stacked-line"
       },
       {
         "type": 'line',
-        "label": "New",
+        "label": "最新的数据",
         "data": data_datasets_new,
         "fill": false, "lineTension": 0.1, "borderColor": "#18bc9c",
         "yAxisID": "not-stacked-line"
       },
       {
-        "label": "Info",
+        "label": "提示信息",
         "data": data_datasets_info,
         "fill": false, "lineTension": 0.1, "backgroundColor": "#3498db"
       },
       {
-        "label": "Low",
+        "label": "低风险的",
         "data": data_datasets_low,
         "fill": false, "lineTension": 0.1, "backgroundColor": "#ffcb0d"
       },
       {
-        "label": "Medium",
+        "label": "中风险的",
         "data": data_datasets_medium,
         "fill": false, "lineTension": 0.1, "backgroundColor": "#f9a009"
       },
       {
-        "label": "High",
+        "label": "高风险的",
         "data": data_datasets_high,
         "fill": false, "lineTension": 0.1, "backgroundColor": "#df3d03"
       },
       {
-        "label": "Critical",
+        "label": "严重的",
         "data": data_datasets_critical,
         "fill": false, "lineTension": 0.1, "backgroundColor": "#cc0500"
       }
@@ -581,7 +581,7 @@ $(function() {
   // Run direct scan now Event
   $("#modal-run-scan").on('show.bs.modal', function (e) {
     scan_title = e.relatedTarget.getAttribute('scan-title');
-    $("div#run-scan").html("Scan started: <b>"+escapeHtml(scan_title)+"</b><br/><br/>");
+    $("div#run-scan").html("Scan started: <b>"+scan_title+"</b><br/><br/>");
 
     //Hide the modal 3 seconds later
     var myModal = $(this);
@@ -682,7 +682,7 @@ $(function() {
     id = e.relatedTarget.getAttribute('scan-id');
     scan_title = e.relatedTarget.getAttribute('scan-title');
     $("div#delete-scan").attr('scan-id', id);
-    $("div#delete-scan").html("ID: <b>"+id+"</b><br/>Title: <b>"+escapeHtml(scan_title)+"</b><br/><br/>");
+    $("div#delete-scan").html("编号: <b>"+id+"</b><br/>标题: <b>"+scan_title+"</b><br/><br/>");
   });
   $("button.btn-delete-scan").on('click', function (e) {
     id = $("div#delete-scan").attr('scan-id');

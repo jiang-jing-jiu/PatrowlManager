@@ -35,7 +35,6 @@ class AlertSerializer(serializers.ModelSerializer):
             'message',
             'severity',
             'status',
-            'metadata',
             'created_at',
             'updated_at',
         ]
@@ -46,4 +45,4 @@ class AlertListCreate(generics.ListCreateAPIView):
     serializer_class = AlertSerializer
 
     def get_queryset(self):
-        return Alert.objects.for_user(self.request.user).all().order_by('-updated_at')
+        return Alert.objects.for_user(self.request.user).all().order_by('-id')

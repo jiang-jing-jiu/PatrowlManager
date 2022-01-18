@@ -78,7 +78,7 @@ div.risk-trends {
     <div class="col-md-4">
       <dl class="dl-horizontal">
         <dt>Name</dt>
-        <dd><strong>{{ asset_group.name }}</strong></dd>
+        <dd><b>{{ asset_group.name }}</b></dd>
 
         <dt>Description</dt>
         <dd>{{ asset_group.description }}</dd>
@@ -117,9 +117,9 @@ div.risk-trends {
 
         <dt>Criticality</dt>
         {% if asset_group.criticity == 'low' %}
-        <dd><span class="label label-low">low</span></dd>
+        <dd><span class="label label-low">低风险的</span></dd>
         {% elif asset_group.criticity == 'medium' %}
-        <dd><span class="label label-medium">medium</span></dd>
+        <dd><span class="label label-medium">中风险的</span></dd>
         {% elif asset_group.criticity == 'high' %}
         <dd><span class="label label-critical">high</span></dd>
         {% endif %}
@@ -142,44 +142,42 @@ div.risk-trends {
 
     <div class="col-md-6 tiles"> <!-- Second col -->
       <div class="row">
-        <strong>Findings Stats </strong><span class="glyphicon glyphicon-stats"></span>
+        <b>Findings Stats </b><span class="glyphicon glyphicon-stats"></span>
       </div>
       <div class="row finding-stats">
         <div class="col-md-2">
           <div class="tile tile-critical">
-              <div>Critical</div><span class="label label-critical">{{findings_stats.nb_critical}}</span>
+              <div>Critical:</div><span class="label label-critical">{{findings_stats.critical}}</span>
           </div>
         </div>
         <div class="col-md-2">
           <div class="tile tile-high">
-              <div>High</div><span class="label label-high">{{findings_stats.nb_high}}</span>
+              <div>High:</div><span class="label label-high">{{findings_stats.high}}</span>
           </div>
         </div>
         <div class="col-md-2">
           <div class="tile tile-medium">
-              <div>Medium</div><span class="label label-medium">{{findings_stats.nb_medium}}</span>
+              <div>Medium:</div><span class="label label-medium">{{findings_stats.medium}}</span>
           </div>
         </div>
         <div class="col-md-2">
           <div class="tile tile-low">
-              <div>Low</div><span class="label label-low">{{findings_stats.nb_low}}</span>
+              <div>Low:</div><span class="label label-low">{{findings_stats.low}}</span>
           </div>
         </div>
         <div class="col-md-2">
           <div class="tile tile-info">
-              <div>Info</div><span class="label label-info">{{findings_stats.nb_info}}</span>
+              <div>Info:</div><span class="label label-info">{{findings_stats.info}}</span>
           </div>
         </div>
       </div>
       <div class="row">
         <div class="col-md-12">
-      		<strong># Findings</strong>: <i>{{findings_stats.total}} ({{findings_stats.nb_new}} news, {{findings_stats.nb_ack}} ackd.)</i><br/>
-      		<strong># Scans related</strong>: <i>{{scans_stats.performed}} performed, {{scans_stats.defined}} defined, {{scans_stats.running}} currently running</i><br/>
-      		<strong># Scans from engines</strong>: <i>
-          {% for engine, counter in findings_stats.items %}
-            {% if engine|slice:":7" == "engine_" and counter > 0 %}
-            {{ engine|slice:"7:" }}: {{ counter }}
-            {% endif %}
+      		<b># Findings</b>: <i>{{findings_stats.total}} ({{findings_stats.new}} news, {{findings_stats.ack}} ackd.)</i><br/>
+      		<b># Scans related</b>: <i>{{scans_stats.performed}} performed, {{scans_stats.defined}} defined, {{scans_stats.running}} currently running</i><br/>
+      		<b># Scans from engines</b>: <i>
+          {% for engine, counter in engines_stats.items %}
+            {{ engine }}: {{ counter }}{% if not forloop.last %}, {% endif %}
           {% endfor %}</i><br/>
       	</div>
       </div>
@@ -187,12 +185,12 @@ div.risk-trends {
 
     <div class="col-md-2 text-center"> <!-- Thrird col -->
       <div class="row">
-      <strong>Global Security Rating </strong><span class="glyphicon glyphicon-dashboard"></span>
+      <b>Global Security Rating </b><span class="glyphicon glyphicon-dashboard"></span>
         <div class="risk-grade risk-grade-{{asset_group_risk_grade|keyvalue:'now'}}">
-          <strong>{{asset_group_risk_grade|keyvalue:"now"}}</strong></div>
+          <b>{{asset_group_risk_grade|keyvalue:"now"}}</b></div>
         </div><br/>
       <div class="row risk-trends">
-      <strong>Trends </strong><span class="glyphicon glyphicon-time"></span>
+      <b>Trends </b><span class="glyphicon glyphicon-time"></span>
       </div>
       <div class="row">
         <div class="col-md-4" title="1 day ago">-1d
@@ -231,7 +229,7 @@ div.risk-trends {
   <div class="row">
     <div class="col-md-11">
       <!-- <h4>Quick report</h4> -->
-      <!-- <p>
+      <p>
         {% for scope, counter in asset_scopes %}
           <a href="/findings/list?_scope={{ counter.id }}&_asset_group_id={{ asset_group.id }}" style="text-decoration:none;">
           {% if counter.critical > 0 %}
@@ -248,7 +246,7 @@ div.risk-trends {
           </a>
         {% endfor %}
         <a href="#" data-toggle="modal" data-target="#modal-scopes-details">+ details</a>
-      </p> -->
+      </p>
     </div>
   </div>
 </div>
@@ -293,7 +291,7 @@ div.risk-trends {
       <table class="table table-hover" data-toggle="table" data-sort-name="value" data-sort-order="desc">
         <thead>
           <tr>
-            <th scope="col"><input type="checkbox" onClick="toggle(this, 'asset')" /></th>
+            <th><input type="checkbox" onClick="toggle(this, 'asset')" /></th>
             <th data-field="name">Name</th>
             <th data-field="findings_summary">Findings summary</th>
             <th data-field="criticity">Criticality</th>
@@ -337,9 +335,9 @@ div.risk-trends {
               {% endif %}
             </td>
             {% if asset.criticity == 'low' %}
-            <td><span class="label label-low">Low</span></td>
+            <td><span class="label label-low">低风险的</span></td>
             {% elif asset.criticity == 'medium' %}
-            <td><span class="label label-medium">Medium</span></td>
+            <td><span class="label label-medium">中风险的</span></td>
             {% elif asset.criticity == 'high' %}
             <td><span class="label label-critical">High</span></td>
             {% endif %}
@@ -407,7 +405,7 @@ div.risk-trends {
             <option value="50">50</option>
             <option value="200">200</option>
           </select>
-          &nbsp;assets per page
+          &nbsp;条/每页
         </div>
       </div>
     </div>
@@ -435,15 +433,15 @@ div.risk-trends {
       <table class="table table-hover" id="table" data-toggle="table">
         <thead>
           <tr>
-            <th scope="col"><input type="checkbox" onClick="toggle(this, 'finding')" /></th>
-            <th scope="col">Asset</th>
-            <th scope="col">Finding Title</th>
-            <th scope="col">Finding Type</th>
-            <th scope="col">Severity</th>
-            <th scope="col">Status</th>
-            <th scope="col">From</th>
-            <th scope="col">Last update</th>
-            <th scope="col">Actions</th>
+            <th><input type="checkbox" onClick="toggle(this, 'finding')" /></th>
+            <th>Asset</th>
+            <th>Finding Title</th>
+            <th>Finding Type</th>
+            <th>Severity</th>
+            <th>Status</th>
+            <th>From</th>
+            <th>Last update</th>
+            <th>Actions</th>
           </tr>
         </thead>
         <tbody>
@@ -455,15 +453,15 @@ div.risk-trends {
           <td>{{ finding.type }}</td>
           <td>
             {% if finding.severity == 'critical' %}
-            <span class="label label-critical">{{ finding.severity }}</span>
+            <span class="label label-critical">严重的</span>
             {% elif finding.severity == 'high' %}
-            <span class="label label-high">{{ finding.severity }}</span>
+            <span class="label label-high">高风险的</span>
             {% elif finding.severity == 'medium' or finding.severity == 'moderate' %}
-            <span class="label label-medium">{{ finding.severity }}</span>
+            <span class="label label-medium">中等的</span>
             {% elif finding.severity == 'low' %}
-            <span class="label label-low">{{ finding.severity }}</span>
+            <span class="label label-low">低风险的</span>
             {% else %}
-            <span class="label label-info">{{ finding.severity }}</span>
+            <span class="label label-info">提示信息</span>
             {% endif %}
             </td>
           {% if finding.status == 'new' %}
@@ -534,7 +532,7 @@ div.risk-trends {
             <option value="50">50</option>
             <option value="200">200</option>
           </select>
-          &nbsp;findings per page
+          &nbsp;条/每页
         </div>
       </div>
     </div>
@@ -543,12 +541,12 @@ div.risk-trends {
       <table class="table table-hover" id="table" data-toggle="table">
         <thead>
           <tr>
-            <th scope="col">Severity</th>
-            <th scope="col">Remediations</th>
-            <th scope="col">Scopes</th>
-            <th scope="col">Related findings</th>
-            <th scope="col">Status</th>
-            <th scope="col">Last update</th>
+            <th>Severity</th>
+            <th>Remediations</th>
+            <th>Scopes</th>
+            <th>Related findings</th>
+            <th>Status</th>
+            <th>Last update</th>
           </tr>
         </thead>
         <tbody>
@@ -557,15 +555,15 @@ div.risk-trends {
           <tr>
             <td>
               {% if finding.severity == 'critical' %}
-              <span class="label label-critical">{{ finding.severity }}</span>
+              <span class="label label-critical">严重的</span>
               {% elif finding.severity == 'high' %}
-              <span class="label label-high">{{ finding.severity }}</span>
+              <span class="label label-high">高风险的</span>
               {% elif finding.severity == 'medium' or finding.severity == 'moderate' %}
-              <span class="label label-medium">{{ finding.severity }}</span>
+              <span class="label label-medium">中等的</span>
               {% elif finding.severity == 'low' %}
-              <span class="label label-low">{{ finding.severity }}</span>
+              <span class="label label-low">低风险的</span>
               {% else %}
-              <span class="label label-info">{{ finding.severity }}</span>
+              <span class="label label-info">提示信息</span>
               {% endif %}
             </td>
             <td>{{ finding.solution }}</td>
@@ -599,14 +597,14 @@ div.risk-trends {
       <table class="table table-hover" id="table" data-toggle="table">
         <thead>
           <tr>
-            <th scope="col"><input type="checkbox" onClick="toggle(this, 'scan_defs')" /></th>
-            <th scope="col">Title</th>
-            <th scope="col"># Scans</th>
-            <th scope="col">Type</th>
-            <th scope="col">Engine</th>
-            <th scope="col">Status</th>
-            <th scope="col">Last update</th>
-            <th scope="col">Actions</th>
+            <th><input type="checkbox" onClick="toggle(this, 'scan_defs')" /></th>
+            <th>Title</th>
+            <th># Scans</th>
+            <th>Type</th>
+            <th>Engine</th>
+            <th>Status</th>
+            <th>Last update</th>
+            <th>Actions</th>
           </tr>
         </thead>
         <tbody>
@@ -614,7 +612,7 @@ div.risk-trends {
           <tr>
             <td><input type="checkbox" class="radio" name="scan_defs" value="{{ scan_def.id }}"/></td>
             <td><a href="/scans/defs/details/{{ scan_def.id }}" class="text-primary">{{ scan_def.title }}</a></td>
-            <td>{{ scan_def.nb_scans }}</td>
+            <td>{{ scan_def.scan_set.count }}</td>
             <td>{{ scan_def.scan_type }}</td>
             <td>{{ scan_def.engine_type_name }}</td>
             {% if scan_def.scan_type == "periodic" %}
@@ -754,7 +752,7 @@ div.risk-trends {
   {% if messages %}
   <ul class="messages">
       {% for message in messages %}
-      <li {% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message }}</li>
+      <li{% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message }}</li>
       {% endfor %}
   </ul>
   {% endif %}
@@ -780,13 +778,13 @@ div.risk-trends {
           <table class="table table-sum table-hover">
             <thead>
               <tr>
-                <th scope="col">Scopes</th>
-                <th scope="col">Critical</th>
-                <th scope="col">High</th>
-                <th scope="col">Medium</th>
-                <th scope="col">Low</th>
-                <th scope="col">Info</th>
-                <th scope="col">Total</th>
+                <th>Scopes</th>
+                <th>Critical</th>
+                <th>High</th>
+                <th>Medium</th>
+                <th>Low</th>
+                <th>Info</th>
+                <th>Total</th>
               </tr>
             </thead>
             <tbody>
@@ -857,9 +855,9 @@ div.risk-trends {
         <div id="delete-finding">
           <!-- Content -->
         </div>
-        Confirm Deleting?
-        <button type="button" class="btn btn-xs btn-warning btn-delete-finding" data-dismiss="modal" autofocus>Yes</button>
-        <button type="button" class="btn btn-xs btn-primary" data-dismiss="modal">No</button>
+        确定删除
+        <button type="button" class="btn btn-xs btn-warning btn-delete-finding" data-dismiss="modal" autofocus>是</button>
+        <button type="button" class="btn btn-xs btn-primary" data-dismiss="modal">否</button>
       </div>
     </div>
   </div>
@@ -883,7 +881,7 @@ div.risk-trends {
       <div class="modal-body">
         <div id="asset-tags">
           <!-- Content -->
-          <strong>Current tags</strong>: {{ asset_group.categories.all|join:", " }}<br/>
+          <b>Current tags</b>: {{ asset_group.categories.all|join:", " }}<br/>
           <p class="text-warning">
             Warning: <br/>
             1/ All sub-tags will be deleted if a parent tag is added<br/>
@@ -1102,7 +1100,7 @@ div.risk-trends {
       finding_id = e.relatedTarget.getAttribute('finding-id');
       finding_title = e.relatedTarget.getAttribute('finding-title');
       $("div#delete-finding").attr('finding-id', finding_id);
-      $("div#delete-finding").html("Finding: <b>"+escapeHtml(finding_title)+"</b><br/><br/>");
+      $("div#delete-finding").html("Finding: <b>"+finding_title+"</b><br/><br/>");
     });
     $("button.btn-delete-finding").on('click', function (e) {
       finding_id = $("div#delete-finding").attr('finding-id');

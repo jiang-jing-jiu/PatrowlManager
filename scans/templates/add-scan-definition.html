@@ -19,57 +19,57 @@ label.radio {
 </style>
 
 <ul class="breadcrumb">
-  <li><a href="{% url 'list_scans_view' %}">scans</a></li>
-  <li><a href="{% url 'list_scan_def_view' %}">definition</a></li>
-  <li class="active">Add new scan</li>
+  <li><a href="{% url 'list_scans_view' %}">扫描</a></li>
+  <li><a href="{% url 'list_scan_def_view' %}">任务</a></li>
+  <li class="active">添加新扫描任务</li>
 </ul>
 
 <div class="container">
   <form action="{% url 'add_scan_def_view' %}" method="post" class="form-horizontal" id="add-scan-def-form">
-    <legend>Add a new scan definition</legend>
+    <legend>添加新的扫描任务</legend>
     {% csrf_token %}
 
     <!-- Title -->
     <div class="form-group">
-      <label class="col-sm-2 control-label" for="id_title">Title</label>
+      <label class="col-sm-2 control-label" for="id_title">标题</label>
       <div class="col-sm-5">
-        <input id="id_title" name="title" type="text" placeholder="Enter a title..." required class="form-control"/>
+        <input id="id_title" name="title" type="text" placeholder="请输入标题..." required class="form-control"/>
       </div>
     </div>
 
     <!-- Description -->
     <div class="form-group">
-      <label class="col-sm-2 control-label" for="id_description">Description</label>
+      <label class="col-sm-2 control-label" for="id_description">描述</label>
       <div class="col-sm-5">
-        <textarea cols="40" id="id_description" name="description" placeholder="Enter a quick description..." rows="5" class="form-control"></textarea>
+        <textarea cols="40" id="id_description" name="description" placeholder="请输入描述内容 ..." rows="5" class="form-control"></textarea>
       </div>
     </div>
 
     <!-- Scan Type -->
     <div class="form-group">
-      <label class="col-sm-2 control-label" for="id_scan_type">Scan Type</label>
+      <label class="col-sm-2 control-label" for="id_scan_type">扫描类型</label>
       <div class="col-sm-5">
         <div class="col-sm-5 no_padding">
           <div class="btn-group btn-group-sm btn-scantype" data-toggle="buttons">
             <label class="btn btn-success active" id="lbl_scan_type_ondemand">
-              <input type="radio" name="scan_type" value="single" id="id_scan_type_ondemand" autocomplete="off" checked="checked"> On-demand
+              <input type="radio" name="scan_type" value="single" id="id_scan_type_ondemand" autocomplete="off" checked="checked"> 手动扫描
             </label>
             <label class="btn btn-primary" id="lbl_scan_type_periodic">
-              <input type="radio" name="scan_type" value="periodic" id="id_scan_type_periodic" autocomplete="off"> Periodical
+              <input type="radio" name="scan_type" value="periodic" id="id_scan_type_periodic" autocomplete="off"> 定期扫描
             </label>
           </div>
         </div>
         <!-- Periodicity options -->
         <div class="col-sm-7">
           <div class="col-sm-6 no_padding">
-            <input class="form-control form-control-sm" type="text" placeholder="freq." id="id_scan_periodic_freq" name="every" disabled>
+            <input class="form-control form-control-sm" type="text" placeholder="频率" id="id_scan_periodic_freq" name="every" disabled>
           </div>
           <div class="col-sm-6 no_padding">
             <select class="form-control form-control-sm" id="id_scan_periodic_period" name="period" disabled>
-              <option value="days">Days</option>
-              <option value="hours">Hours</option>
-              <option value="minutes">Minutes</option>
-              <option value="seconds">Seconds</option>
+              <option value="days">天</option>
+              <option value="hours">小时</option>
+              <option value="minutes">分钟</option>
+              <option value="seconds">秒</option>
             </select>
           </div>
         </div>
@@ -78,38 +78,38 @@ label.radio {
 
     <!-- Scan starting -->
     <div class="form-group">
-      <label class="col-sm-2 control-label" for="id_enabled">Start scan</label>
+      <label class="col-sm-2 control-label" for="id_enabled">开始扫描</label>
       <div class="col-sm-4">
         <div class="col-sm-7 no_padding">
           <div class="btn-group btn-group-sm btn-scanrun" data-toggle="buttons">
             <label class="btn btn-success active" id="lbl_start_later">
-              <input type="radio" name="start_scan" id="id_start_later" autocomplete="off" checked="checked" value="later">Later
+              <input type="radio" name="start_scan" id="id_start_later" autocomplete="off" checked="checked" value="later">稍后
             </label>
             <label class="btn btn-primary" id="lbl_start_now">
-              <input type="radio" name="start_scan" id="id_start_now" autocomplete="off" value="now">Now
+              <input type="radio" name="start_scan" id="id_start_now" autocomplete="off" value="now">现在
             </label>
             <label class="btn btn-primary" id="lbl_start_scheduled">
-              <input type="radio" name="start_scan" id="id_start_scheduled" autocomplete="off" value="scheduled">Scheduled at
+              <input type="radio" name="start_scan" id="id_start_scheduled" autocomplete="off" value="scheduled">计划时间
             </label>
           </div>
         </div>
         <div class="col-sm-5 controls input-append date no_padding" id="id_scheduled_at_div" >
-          <input id="id_scheduled_at" name="scheduled_at" type="text" class="form-control form-control-sm" placeholder="pick a date" disabled/>
+          <input id="id_scheduled_at" name="scheduled_at" type="text" class="form-control form-control-sm" placeholder="选择日期" disabled/>
         </div>
       </div>
     </div>
 
     <!-- Team selection -->
     <div class="form-group">
-      <label class="col-sm-2 control-label" for="id_teams_list">Share with team:</label>
+      <label class="col-sm-2 control-label" for="id_teams_list">与团队分享:</label>
       <div class="col-sm-5 has-feedback">
         <div class="col-sm-3 no_padding">
           <div class="btn-group btn-group-sm btn-scanteam" data-toggle="buttons">
             <label class="btn btn-success active" id="lbl_scan_team_no">
-              <input type="radio" name="scan_team" value="no" id="id_scan_team_no" autocomplete="off" checked="checked"> No
+              <input type="radio" name="scan_team" value="no" id="id_scan_team_no" autocomplete="off" checked="checked"> 否
             </label>
             <label class="btn btn-primary" id="lbl_scan_team_yes">
-              <input type="radio" name="scan_team" value="yes" id="id_scan_team_yes" autocomplete="off"> Yes
+              <input type="radio" name="scan_team" value="yes" id="id_scan_team_yes" autocomplete="off"> 是
             </label>
           </div>
         </div>
@@ -125,10 +125,10 @@ label.radio {
 
     <!-- Asset selection -->
     <div class="form-group">
-      <label class="col-sm-2 control-label" for="id_assets_list">Search asset(s):</label>
+      <label class="col-sm-2 control-label" for="id_assets_list">搜索资产:</label>
       <div class="col-sm-5 has-feedback">
         <div id="scrollable-dropdown-menu">
-          <input class="typeahead form-control" type="text" placeholder="Search assets">
+          <input class="typeahead form-control" type="text" placeholder="搜索资产">
           <i class="form-control-feedback glyphicon glyphicon-search"></i>
         </div>
       </div>
@@ -136,7 +136,7 @@ label.radio {
 
     <!-- Selected assets and asset groups -->
     <div class="form-group">
-      <label class="col-sm-2 control-label" for="id_assets_list">Asset(s) selected:</label>
+      <label class="col-sm-2 control-label" for="id_assets_list">已选中资产:</label>
       <div class="col-sm-5">
         <div class="custom-control custom-checkbox cbx_assets">
           <!-- list of selected assets -->
@@ -146,7 +146,7 @@ label.radio {
 
     <!-- Filter scan policies by engine name -->
     <div class="form-group" id="engine-buttons">
-      <label class="col-sm-2 control-label" for="id_engine_name">Filter by Engine:</label>
+      <label class="col-sm-2 control-label" for="id_engine_name">按引擎过滤:</label>
       <div class="col-sm-5">
         <div class="btn-group btn-group-sm" role="group" data-toggle="buttons">
           <label class="btn btn-primary" engineId="0">
@@ -165,7 +165,7 @@ label.radio {
 
     <!-- Filter scan policies by scan category -->
     <div class="form-group" id="category-buttons">
-      <label class="col-sm-2 control-label" for="id_scan_category">Or, Filter by Category:</label>
+      <label class="col-sm-2 control-label" for="id_scan_category">或者，按类别筛选:</label>
       <div class="col-sm-5">
         <div class="btn-group btn-group-sm" role="group" data-toggle="buttons">
           <label class="btn btn-primary" categoryId="0">
@@ -203,7 +203,7 @@ label.radio {
     <!-- Engine instance selection -->
     <!-- Displayed when a policy is selected-->
     <div class="form-group hidden" id="engine-div">
-      <label class="col-sm-2 control-label" for="id_engine_id">Select Engine:</label>
+      <label class="col-sm-2 control-label" for="id_engine_id">选择引擎:</label>
       <div class="col-sm-5">
         <select id="id_engine" name="engine_id" class="form-control" required>
           <!-- autofilled by jQuery -->
@@ -214,14 +214,11 @@ label.radio {
       <div class="col-sm-2">
       </div>
       <div class="col-sm-5">
-        <button type="submit" class="btn btn-warning col-sm-12">Create a new scan</button>
+        <button type="submit" class="btn btn-warning col-sm-12">创建新扫描</button>
       </div>
     </div>
   </form>
 </div>
-
-{{ scan_policies_json|json_script:"scan_policies_json_script" }}
-{{ engine_list|json_script:"engine_list_script" }}
 
 <script>
 
@@ -243,7 +240,7 @@ label.radio {
         $("#add-scan-def-form button:submit").before('\
         <div class="alert alert-dismissible alert-danger">\
           <button type="button" class="close" data-dismiss="alert">&times;</button>\
-          <strong>No assets selected</strong> Please select at least one asset to scan.\
+          <strong>没有选中资产</strong> 至少选中一个资产.\
         </div>');
       }
 
@@ -265,7 +262,7 @@ label.radio {
         $("#add-scan-def-form button:submit").before('\
         <div class="alert alert-dismissible alert-danger">\
           <button type="button" class="close" data-dismiss="alert">&times;</button>\
-          <strong>Bad policy</strong> Selected policy does not support selected asset types.\
+          <strong>无效策略</strong> 所选策略不支持所选资产类型.\
         </div>');
       }
       return is_valid;
@@ -335,7 +332,7 @@ label.radio {
     $("#id_scheduled_at").datetimepicker({
       minuteStep: 5,
       autoclose: true,
-      language: 'en',
+      language: 'zh-CN',
       format: 'yyyy-mm-dd hh:ii:ss',
       clearBtn: true,
       //pickerPosition: 'bottom-right',
@@ -397,11 +394,11 @@ label.radio {
         },
         suggestion: function(data) {
           if (data.format == "asset"){
-            return '<div>' + escapeHtml(data.value) + ' - '+ escapeHtml(data.name) + '</div>';
+            return '<div>' + data.value + ' - '+ data.name + '</div>';
           } else if (data.format == "taggroup"){
-            return '<div> [Tags] ' + escapeHtml(data.value) + ' - '+ escapeHtml(data.name) + '</div>';
+            return '<div> [Tags] ' + data.value + ' - '+ data.name + '</div>';
           }else {
-            return '<div> [Group] ' + escapeHtml(data.value) + ' - '+ escapeHtml(data.name) + '</div>';
+            return '<div> [Group] ' + data.value + ' - '+ data.name + '</div>';
           }
         }
       }
@@ -412,23 +409,23 @@ label.radio {
           _selected_assets.push(datum["value"]);
           _id_asset += 1;
           $('div.cbx_assets').append("<label for='id_assets_list_"+_id_asset+"' class='custom-control-label'>\
-            <input id='id_assets_list_"+_id_asset+"' class='custom-control-input' name='assets_list' type='checkbox' value='"+datum["id"]+"' asset-type='"+datum["type"]+"'checked/> "+escapeHtml(e.target.value)+"</label><br/>");
+            <input id='id_assets_list_"+_id_asset+"' class='custom-control-input' name='assets_list' type='checkbox' value='"+datum["id"]+"' asset-type='"+datum["type"]+"'checked/> "+e.target.value+"</label><br/>");
         } else if (datum["format"] == "taggroup") {
         _selected_assets.push(datum["value"]);
           _id_asset += 1;
           $('div.cbx_assets').append("<label for='id_taggroups_list_"+_id_asset+"' class='custom-control-label'>\
-            <input id='id_taggroups_list_"+_id_asset+"' class='custom-control-input' name='taggroups_list' type='checkbox' value='"+datum["id"]+"' checked/> "+escapeHtml(e.target.value)+" (tag)</label><br/>");
+            <input id='id_taggroups_list_"+_id_asset+"' class='custom-control-input' name='taggroups_list' type='checkbox' value='"+datum["id"]+"' checked/> "+e.target.value+" (tag)</label><br/>");
          } else {
           _selected_assets.push(datum["value"]);
           _id_asset += 1;
           $('div.cbx_assets').append("<label for='id_assetgroups_list_"+_id_asset+"' class='custom-control-label'>\
-            <input id='id_assetgroups_list_"+_id_asset+"' class='custom-control-input' name='assetgroups_list' type='checkbox' value='"+datum["id"]+"' checked/> "+escapeHtml(e.target.value)+" (group)</label><br/>");
+            <input id='id_assetgroups_list_"+_id_asset+"' class='custom-control-input' name='assetgroups_list' type='checkbox' value='"+datum["id"]+"' checked/> "+e.target.value+" (group)</label><br/>");
         }
       }
     });
 
     // Filter scan policy by engines & categories
-    var policies_list = JSON.parse(JSON.parse(document.getElementById('scan_policies_json_script').textContent));
+    var policies_list = {{ scan_policies_json | safe }};
     var hidden_policies_by_cat = [];
     var hidden_policies_by_engine = [];
     $('#category-buttons').bind('change', function(e){
@@ -505,7 +502,7 @@ label.radio {
     });
 
     // List appropriate engine instances depending on scan policy
-    engine_list = JSON.parse(JSON.parse(document.getElementById('engine_list_script').textContent));
+    engine_list = {{scan_engines_json|safe}}
     $("[name='engine_policy']").change(function(e){
       engine_name = e.currentTarget.getAttribute('engine-name');
       $('select#id_engine').empty();

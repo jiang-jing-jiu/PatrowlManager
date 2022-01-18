@@ -2,13 +2,13 @@
 {% block content %}
 
 <ul class="breadcrumb">
-  <li><a href="{% url 'list_assets_view' %}">assets</a></li>
-  <li class="active">add new assets in bulk [<a href="{% url 'list_assets_view' %}">back</a>]</li>
+  <li><a href="{% url 'list_assets_view' %}">资产</a></li>
+  <li class="active">批量添加新资产 [<a href="{% url 'list_assets_view' %}">返回</a>]</li>
 </ul>
 
 <div class="container">
   <form action="{% url 'bulkadd_asset_view' %}" method="post" class="form-horizontal" enctype="multipart/form-data">
-    <legend>Add assets in bulk [<a href="/static/tmpl/assets_bulk_import_template.csv">template</a>]</legend>
+    <legend>批量添加新资产 [<a href="/static/tmpl/assets_bulk_import_template.csv">模板</a>]</legend>
       {% csrf_token %}
       {% for field in form %}
           {% if field.errors %}
@@ -34,8 +34,8 @@
           {% endif %}
       {% endfor %}
       <div class="form-group">
-        <button type="submit" class="btn btn-primary">Submit</button>
-        <button class="btn btn-primary"><a href="{% url 'list_assets_view' %}">Cancel</a></button>
+        <button type="submit" class="btn btn-primary">提交</button>
+        <button class="btn btn-primary"><a href="{% url 'list_assets_view' %}">取消</a></button>
       </div>
   </form>
 </div>

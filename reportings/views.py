@@ -27,29 +27,65 @@ def homepage_dashboard_view(request):
         teamid = int(request.GET.get('team'))
         # @Todo: ensure the team is allowed for this user
         teamid_selected = teamid
+    scans_filters={}
+    if request.user.id > 1:
+        scans_filters.update({
+            'owner_id': request.user.id
+        })
 
     # Findings
     if teamid_selected >= 0:
-        findings = Finding.objects.for_team(request.user, teamid_selected).all().only("status", "severity", "vuln_refs", "risk_info", "title", "asset_name")
+        findings = Finding.objects.filter(**scans_filters).for_team(request.user, teamid_selected).all().only("status", "severity")
         assets = Asset.objects.for_team(request.user, teamid_selected).all()
         assetgroups = AssetGroup.objects.for_team(request.user, teamid_selected).all()
         scan_definitions = ScanDefinition.objects.for_team(request.user, teamid_selected).all()
         scans = Scan.objects.for_team(request.user, teamid_selected).all()
-        alerts_new = Alert.objects.for_team(request.user, teamid_selected).filter(status="new")
+        alerts_new = Alert.objects.for_team(request.user, teamid_selected).filter(**scans_filters).filter(status="new")
     else:
-        findings = Finding.objects.for_user(request.user).all().only("status", "severity", "vuln_refs", "risk_info", "title", "asset_name")
-        assets = Asset.objects.for_user(request.user).all()
-        assetgroups = AssetGroup.objects.for_user(request.user).all()
+        findings = Finding.objects.filter(**scans_filters).for_user(request.user).all().only("status", "severity")
+        assets = Asset.objects.for_user(request.user).filter(**scans_filters).all()
+        assetgroups = AssetGroup.objects.for_user(request.user).filter(**scans_filters).all()
         scan_definitions = ScanDefinition.objects.for_user(request.user).all()
         scans = Scan.objects.for_user(request.user).all()
-        alerts_new = Alert.objects.for_user(request.user).filter(status="new")
+        alerts_new = Alert.objects.for_user(request.user).filter(status="new").filter(**scans_filters)
+    
+    # 2021.11.28 权限增加
+    if request.user.id == 1:
+        running = scans.filter(status="started").count()
+        enqueued = scans.filter(status="enqueued").count()
+        performed = scans.count()
+        active_periodic = scan_definitions.filter(enabled=True, scan_type='periodic').count()
+        total = EngineInstance.objects.all().count()
+        policies = EnginePolicy.objects.all().count()
+        active = EngineInstance.objects.filter(status='READY', enabled=True).count()
+        Ruletotal = Rule.objects.all().count()
+        RulesActive = Rule.objects.filter(enabled=True).count()
+        total_new = alerts_new.count()
+        defined = scan_definitions.count()
+        new_info = alerts_new.filter(severity="info").count()
+        new_low = alerts_new.filter(severity="low").count()
+        new_medium = alerts_new.filter(severity="medium").count()
+        new_high = alerts_new.filter(severity="high").count()
+        new_critical = alerts_new.filter(severity="critical").count()
+    else:
+        running = scans.filter(status="started").filter(owner_id=request.user.id).count()
+        enqueued = scans.filter(status="enqueued").filter(owner_id=request.user.id).count()
+        performed = scans.filter(owner_id=request.user.id).count()
+        active_periodic = scan_definitions.filter(enabled=True, scan_type='periodic').filter(
+            owner_id=request.user.id).count()
+        total = EngineInstance.objects.filter(user_id=request.user.id).all().count()
+        policies = EnginePolicy.objects.filter(owner_id=request.user.id).all().count()
+        active = EngineInstance.objects.filter(status='READY', enabled=True).filter(user_id=request.user.id).count()
+        Ruletotal = Rule.objects.filter(owner_id=request.user.id).all().count()
+        RulesActive = Rule.objects.filter(owner_id=request.user.id).filter(enabled=True).count()
+        total_new = alerts_new.filter(owner_id=request.user.id).count()
+        defined = scan_definitions.filter(owner_id=request.user.id).count()
+        new_info = alerts_new.filter(severity="info").filter(owner_id=request.user.id).count()
+        new_low = alerts_new.filter(severity="low").filter(owner_id=request.user.id).count()
+        new_medium = alerts_new.filter(severity="medium").filter(owner_id=request.user.id).count()
+        new_high = alerts_new.filter(severity="high").filter(owner_id=request.user.id).count()
+        new_critical = alerts_new.filter(severity="critical").filter(owner_id=request.user.id).count()
 
-    alerts_new_info = Count('id', filter=Q(severity="info"))
-    alerts_new_low = Count('id', filter=Q(severity="low"))
-    alerts_new_medium = Count('id', filter=Q(severity="medium"))
-    alerts_new_high = Count('id', filter=Q(severity="high"))
-    alerts_new_critical = Count('id', filter=Q(severity="critical"))
-    alerts = alerts_new.aggregate(alerts_new_info=alerts_new_info,alerts_new_low=alerts_new_low,alerts_new_medium=alerts_new_medium,alerts_new_high=alerts_new_high,alerts_new_critical=alerts_new_critical)
 
     global_stats = {
         "assets": {
@@ -60,31 +96,31 @@ def homepage_dashboard_view(request):
         "findings": {},
         "scans": {
             # "defined": ScanDefinition.objects.for_user(request.user).all().count(),
-            "defined": scan_definitions.count(),
+            "defined": defined,
             # "performed": Scan.objects.for_user(request.user).all().count(),
-            "running": scans.filter(status="started").count(),
-            "enqueued": scans.filter(status="enqueued").count(),
-            "performed": scans.count(),
+            "running": running,
+            "enqueued": enqueued,
+            "performed": performed,
             # "active_periodic": ScanDefinition.objects.for_user(request.user).filter(enabled=True, scan_type='periodic').count(),
-            "active_periodic": scan_definitions.filter(enabled=True, scan_type='periodic').count(),
+            "active_periodic": active_periodic,
         },
         "engines": {
-            "total": EngineInstance.objects.all().count(),
-            "policies": EnginePolicy.objects.all().count(),
-            "active": EngineInstance.objects.filter(status='READY', enabled=True).count(),
+            "total": total,
+            "policies": policies,
+            "active": active,
         },
         "rules": {
-            "total": Rule.objects.all().count(),
-            "active": Rule.objects.filter(enabled=True).count(),
+            "total": Ruletotal,
+            "active": RulesActive,
             "nb_matches": 0,
         },
         "alerts": {
-            "total_new": alerts_new.count(),
-            "new_info": alerts['alerts_new_info'],
-            "new_low": alerts['alerts_new_low'],
-            "new_medium": alerts['alerts_new_medium'],
-            "new_high": alerts['alerts_new_high'],
-            "new_critical": alerts['alerts_new_critical'],
+            "total_new": total_new,
+            "new_info": new_info,
+            "new_low": new_low,
+            "new_medium": new_medium,
+            "new_high": new_high,
+            "new_critical": new_critical,
         },
     }
 
@@ -99,21 +135,19 @@ def homepage_dashboard_view(request):
         )
     global_stats["asset_types"] = assets.aggregate(**asset_types_stats_params)
 
-    # Finding counters
+    # finding counters
     findings_stats = findings.exclude(Q(status='false-positive') | Q(status='duplicate')).aggregate(
-        nb_new=Count('id', filter=Q(status='new')),
-        nb_critical=Count('id', filter=Q(severity='critical')),
-        nb_high=Count('id', filter=Q(severity='high')),
-        nb_medium=Count('id', filter=Q(severity='medium')),
-        nb_low=Count('id', filter=Q(severity='low')),
-        nb_info=Count('id', filter=Q(severity='info')),
-        cvss_lte5=Count('id', filter=Q(risk_info__cvss_base_score__lt=5)),
-        cvss_5to7=Count('id', filter=Q(risk_info__cvss_base_score__lt=7, risk_info__cvss_base_score__gte=5)),
-        cvss_gte7=Count('id', filter=Q(risk_info__cvss_base_score__lt=9, risk_info__cvss_base_score__gte=7)),
-        cvss_gte9=Count('id', filter=Q(risk_info__cvss_base_score__lt=10, risk_info__cvss_base_score__gte=9)),
-        cvss_eq10=Count('id', filter=Q(risk_info__cvss_base_score=10))
+        nb_new=Coalesce(Sum(Case(When(status='new', then=1)), output_field=models.IntegerField()), 0),
+        nb_critical=Coalesce(Sum(Case(When(severity='critical', then=1)), output_field=models.IntegerField()), 0),
+        nb_high=Coalesce(Sum(Case(When(severity='high', then=1)), output_field=models.IntegerField()), 0),
+        nb_medium=Coalesce(Sum(Case(When(severity='medium', then=1)), output_field=models.IntegerField()), 0),
+        nb_low=Coalesce(Sum(Case(When(severity='low', then=1)), output_field=models.IntegerField()), 0),
+        nb_info=Coalesce(Sum(Case(When(severity='info', then=1)), output_field=models.IntegerField()), 0),
     )
     global_stats["findings"] = {
+        # "total_raw": RawFinding.objects.count(),
+        # "total_raw": RawFinding.objects.count(),
+        # "total": findings.count(),
         "total": findings_stats["nb_critical"]+findings_stats["nb_high"]+findings_stats["nb_medium"]+findings_stats["nb_low"]+findings_stats["nb_info"],
         "new": findings_stats["nb_new"],
         "critical": findings_stats["nb_critical"],
@@ -123,15 +157,6 @@ def homepage_dashboard_view(request):
         "info": findings_stats["nb_info"],
     }
 
-    cvss_scores = {'lte5': 0, '5to7': 0, 'gte7': 0, 'gte9': 0, 'eq10': 0}
-    cvss_scores.update({
-        'lte5': findings_stats["cvss_lte5"],
-        '5to7': findings_stats["cvss_5to7"],
-        'gte7': findings_stats["cvss_gte7"],
-        'gte9': findings_stats["cvss_gte9"],
-        'eq10': findings_stats["cvss_eq10"],
-    })
-
     # update nb_matches
     matches = 0
     for r in Rule.objects.all():
@@ -139,10 +164,19 @@ def homepage_dashboard_view(request):
     global_stats["rules"].update({"nb_matches": matches})
 
     # Last 6 findings
-    last_findings = findings.order_by('-id')[:6][::-1]
+    # last_findings = Finding.objects.for_user(request.user).all().order_by('-id')[:6][::-1]
+    #last_findings = findings.order_by('-id')[:6][::-1]   2021.11.28 权限整合
 
     # Last 6 scans
-    last_scans = scans.order_by('-started_at')[:6]
+    # last_scans = Scan.objects.for_user(request.user).all().order_by('-started_at')[:6]
+    #last_scans = scans.order_by('-started_at')[:6] 2021.11.28 权限整合
+    
+    if request.user.id == 1:
+        last_scans = scans.order_by('-started_at')[:6]
+        last_findings = findings.order_by('-id')[:6][::-1]
+    else:
+        last_scans = scans.filter(owner_id=request.user.id).order_by('-started_at')[:6]
+        last_findings = findings.filter(owner_id=request.user.id).order_by('-id')[:6][::-1]
 
     # Asset grades repartition and TOP 10
     asset_grades_map = {
@@ -178,6 +212,7 @@ def homepage_dashboard_view(request):
 
     # Asset groups
     assetgroups_risk_scores = {}
+    # ags = AssetGroup.objects.for_user(request.user).all().only("risk_level", "criticity", "id", "name")
     ags = assetgroups.only("risk_level", "criticity", "id", "name")
 
     for assetgroup in ags:
@@ -196,37 +231,55 @@ def homepage_dashboard_view(request):
         assetgroup_grades_map_list.append({key: assetgroup_grades_map[key]})
 
     # Critical findings
-    active_findings = findings.exclude(status__in=['false-positive', 'duplicate', 'closed', 'patched', 'undone', 'mitigated']).only("id", "severity", "title", "asset_name")
     top_critical_findings = []
     MAX_CF = 6
-    for finding in active_findings.filter(severity="critical"):
+    for finding in findings.filter(severity="critical").exclude(Q(status='false-positive') | Q(status='duplicate')).only("id", "severity", "title", "asset_name"):
         if len(top_critical_findings) <= MAX_CF: top_critical_findings.append(finding)
     if len(top_critical_findings) <= MAX_CF:
-        for finding in active_findings.filter(severity="high"):
+        for finding in findings.filter(severity="high").exclude(Q(status='false-positive') | Q(status='duplicate')).only("id", "severity", "title", "asset_name"):
             if len(top_critical_findings) <= MAX_CF: top_critical_findings.append(finding)
     if len(top_critical_findings) <= MAX_CF:
-        for finding in active_findings.filter(severity="medium"):
+        for finding in findings.filter(severity="medium").exclude(Q(status='false-positive') | Q(status='duplicate')).only("id", "severity", "title", "asset_name"):
             if len(top_critical_findings) <= MAX_CF: top_critical_findings.append(finding)
     if len(top_critical_findings) <= MAX_CF:
-        for finding in active_findings.filter(severity="low"):
+        for finding in findings.filter(severity="low").exclude(Q(status='false-positive') | Q(status='duplicate')).only("id", "severity", "title", "asset_name"):
             if len(top_critical_findings) <= MAX_CF: top_critical_findings.append(finding)
     if len(top_critical_findings) <= MAX_CF:
-        for finding in active_findings.filter(severity="info"):
+        for finding in findings.filter(severity="info").only("id", "severity", "title", "asset_name"):
             if len(top_critical_findings) <= MAX_CF: top_critical_findings.append(finding)
+
+    # CVSS
+    cvss_scores = {'lte5': 0, '5to7': 0, 'gte7': 0, 'gte9': 0, 'eq10': 0}
+    # for finding in findings.only("risk_info"):
+    #     if finding.risk_info["cvss_base_score"] < 5.0: cvss_scores.update({'lte5': cvss_scores['lte5']+1})
+    #     if finding.risk_info["cvss_base_score"] >= 5.0 and finding.risk_info["cvss_base_score"] <= 7.0: cvss_scores.update({'5to7': cvss_scores['5to7']+1})
+    #     if finding.risk_info["cvss_base_score"] >= 7.0: cvss_scores.update({'gte7': cvss_scores['gte7']+1})
+    #     if finding.risk_info["cvss_base_score"] >= 9.0 and finding.risk_info["cvss_base_score"] < 10: cvss_scores.update({'gte9': cvss_scores['gte9']+1})
+    #     if finding.risk_info["cvss_base_score"] == 10.0: cvss_scores.update({'eq10': cvss_scores['eq10']+1})
+    for finding in findings.prefetch_related("risk_info__cvss_base_score").only("risk_info"):
+        if finding.risk_info["cvss_base_score"] < 5.0: cvss_scores.update({'lte5': cvss_scores['lte5']+1})
+        if finding.risk_info["cvss_base_score"] >= 5.0 and finding.risk_info["cvss_base_score"] <= 7.0: cvss_scores.update({'5to7': cvss_scores['5to7']+1})
+        if finding.risk_info["cvss_base_score"] >= 7.0: cvss_scores.update({'gte7': cvss_scores['gte7']+1})
+        if finding.risk_info["cvss_base_score"] >= 9.0 and finding.risk_info["cvss_base_score"] < 10: cvss_scores.update({'gte9': cvss_scores['gte9']+1})
+        if finding.risk_info["cvss_base_score"] == 10.0: cvss_scores.update({'eq10': cvss_scores['eq10']+1})
 
     # CVE & CWE
     cxe_stats = {}
     cve_list = {}
     cwe_list = {}
 
-    finding_cves_list = active_findings.exclude(
-            vuln_refs__CVE__isnull=True
+    # finding_cves_list = Finding.objects.for_user(request.user).exclude(
+    finding_cves_list = findings.exclude(
+            Q(vuln_refs__CVE__isnull=True)|
+            Q(status__in=['mitigated', 'patched', 'closed', 'false-positive', 'duplicate'])
         ).annotate(
             cvelist=KeyTextTransform("CVE", 'vuln_refs')
         ).values('cvelist')
 
-    finding_cwes_list = active_findings.exclude(
-            vuln_refs__CWE__isnull=True
+    # finding_cwes_list = Finding.objects.for_user(request.user).exclude(
+    finding_cwes_list = findings.exclude(
+            Q(vuln_refs__CWE__isnull=True)|
+            Q(status__in=['mitigated', 'patched', 'closed', 'false-positive', 'duplicate'])
         ).annotate(
             cwelist=KeyTextTransform("CWE", 'vuln_refs')
         ).values('cwelist')
@@ -252,15 +305,14 @@ def homepage_dashboard_view(request):
     })
 
     teams = []
-    if settings.PRO_EDITION:
-        if request.user.is_superuser:
-            teams = Team.objects.all().order_by('name')
-        else:
-            for tu in TeamUser.objects.filter(user=request.user, organization__is_active=True):
-                teams.append({
-                    'id': tu.organization.id,
-                    'name': tu.organization.name
-                })
+    if settings.PRO_EDITION and request.user.is_superuser:
+        teams = Team.objects.all().order_by('name')
+    elif settings.PRO_EDITION and not request.user.is_superuser:
+        for tu in TeamUser.objects.filter(user=request.user, organization__is_active=True):
+            teams.append({
+                'id': tu.organization.id,
+                'name': tu.organization.name
+            })
 
     return render(request, 'home-dashboard.html', {
         'global_stats': global_stats,
@@ -330,7 +382,7 @@ def patch_management_view(request):
         35453, # Microsoft Windows Update Reboot Required - http://www.tenable.com/plugins/index.php?view=single&id=35453
         63756, # AIX 5.2 TL 0 : reboot - http://www.tenable.com/plugins/index.php?view=single&id=63756
         63757, # AIX 5.3 TL 0 : reboot http://www.tenable.com/plugins/index.php?view=single&id=63757
-    ]
+        ]
     dataset_7days_reboot = Asset.objects.for_user(request.user).filter(
         Q(rawfinding__created_at__gt=seven_days_ago) &
         Q(rawfinding__risk_info__vuln_publication_date__gte=seven_days_ago.strftime('%Y/%m/%d')) &

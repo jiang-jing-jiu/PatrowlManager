@@ -73,8 +73,8 @@ function toggle(source, element) {
 </script>
 
 <ul class="breadcrumb">
-  <li><a href="/scans/list">scans</a></li>
-  <li class="active">{{ scan.title }} [<a href="javascript:goBack()">back</a>]</li>
+  <li><a href="/scans/list">扫描</a></li>
+  <li class="active">{{ scan.title }} [<a href="javascript:goBack()">返回</a>]</li>
 </ul>
 
 <div class="container-fluid">
@@ -82,17 +82,17 @@ function toggle(source, element) {
     <div class="col-sm-9">
       <div id="menu_tabs" class="container-fluid">
         <ul class="nav nav-tabs" id="menu_tabs_ul" style="display: flex;">
-          <li class="active"><a data-toggle="tab"  href="#assets">Assets <span class="badge badge-pill badge-primary"> {{assets.paginator.count}}</span></a></li>
+          <li class="active"><a data-toggle="tab"  href="#assets">资产 <span class="badge badge-pill badge-primary"> {{assets.paginator.count}}</span></a></li>
           {% if assetgroups.count > 0 %}
           <li><a data-toggle="tab" href="#assetgroups">Asset groups <span class="badge badge-pill badge-primary"> {{assetgroups.count}}</span></a></li>
           {% endif %}
-          <li><a data-toggle="tab" href="#findings">Findings <span class="badge badge-pill badge-primary"> {{findings_stats.count}}</span></a></li>
-          <li><a data-toggle="tab" href="#events">Events <span class="badge badge-pill badge-primary"> {{scan_events.paginator.count}}</span></a></li>
+          <li><a data-toggle="tab" href="#findings">发现 <span class="badge badge-pill badge-primary"> {{findings_stats.count}}</span></a></li>
+          <li><a data-toggle="tab" href="#events">事件 <span class="badge badge-pill badge-primary"> {{scan_events.paginator.count}}</span></a></li>
           <!-- <li><a data-toggle="tab" href="#risks">Risk summary</a></li> -->
           <li style="width: 60%;">
             <div class="row" style="margin-top: 5px;">
               <div class="has-feedback col-sm-12" style="padding-right: 0px;">
-                <input type="text" placeholder="Quick search..." class="form-control form-control-sm" id="scan-quick-search" />
+                <input type="text" placeholder="快速搜索..." class="form-control form-control-sm" id="scan-quick-search" />
                 <!-- <i class="form-control-sm-feedback glyphicon glyphicon-search" style="color: #b4bcc2;"></i> -->
                 <a href="#modal-search-help" data-toggle="modal" data-target="#modal-search-help" style="color: #b4bcc2;"><span class="form-control-sm-feedback glyphicon glyphicon-search"></span></a>
               </div>
@@ -109,10 +109,10 @@ function toggle(source, element) {
           <table class="table table-hover" id="table-assets">
             <thead>
               <tr>
-                <th data-field="asset_name">Asset</th>
-                <th data-field="asset_type">Type</th>
-                <th data-field="asset_criticity">Criticality</th>
-                <th data-field="asset_findings" style="width: 60%">Finding summary</th>
+                <th data-field="asset_name">资产</th>
+                <th data-field="asset_type">类型</th>
+                <th data-field="asset_criticity">危险程度</th>
+                <th data-field="asset_findings" style="width: 60%">结果概要</th>
                 <!-- <th data-field="actions">Actions</th> -->
               </tr>
             </thead>
@@ -122,13 +122,13 @@ function toggle(source, element) {
               <td>{{ asset.value|truncatechars:35 }}</td>
               <td>{{ asset.type }}</td>
               {% if asset.criticity == 'low' %}
-              <td><span class="label label-low">Low</span></td>
+              <td><span class="label label-low">低风险的</span></td>
               {% elif asset.criticity == 'medium' %}
-              <td><span class="label label-medium">Medium</span></td>
+              <td><span class="label label-medium">中风险的</span></td>
               {% elif asset.criticity == 'high' %}
-              <td><span class="label label-high">High</span></td>
+              <td><span class="label label-high">高风险的</span></td>
               {% elif asset.criticity == 'critical' %}
-              <td><span class="label label-critical">Critical</span></td>
+              <td><span class="label label-critical">严重的</span></td>
               {% endif %}
               <td class="scan-progress">
                 <div class="progress">
@@ -256,13 +256,13 @@ function toggle(source, element) {
         <div id="findings" class="tab-pane fade">
           <div class="dropdown">
             <button class="btn btn-primary btn-xs dropdown-toggle" type="button" id="dropdown-menu-actions" data-toggle="dropdown" aria-haspopup="true" aria-expanded="true">
-              Actions
+              操作
               <span class="caret"></span>
             </button>
             <ul class="dropdown-menu" aria-labelledby="dropdown-menu-actions">
-              <li><a class="btn-finding-ack" href="#">Ack selected findings</a></li>
-              <li><a class="btn-finding-compare-selected" href="#">Compare selected findings (2 findings max.)</a></li>
-              <li><a class="btn-finding-delete-selected" href="#">Delete selected findings (no confirm)</a></li>
+              <li><a class="btn-finding-ack" href="#">确认选定的扫描结果</a></li>
+              <li><a class="btn-finding-compare-selected" href="#">比较选定的扫描结果（最多2个调查结果）</a></li>
+              <li><a class="btn-finding-delete-selected" href="#">删除选定的扫描结果（无确认）</a></li>
             </ul>
           </div>
 
@@ -288,15 +288,15 @@ function toggle(source, element) {
                 {% if finding.status == "new" %}<text class="text-danger">{{ finding.status }} <text>{% else %}{{ finding.status }} {% endif %}
               </td>
               {% if finding.severity == 'critical' %}
-              <td><span class="label label-critical">{{ finding.severity }}</span></td>
+              <td><span class="label label-critical">严重的</span></td>
               {% elif finding.severity == 'high' %}
-              <td><span class="label label-high">{{ finding.severity }}</span></td>
+              <td><span class="label label-high">高风险的</span></td>
               {% elif finding.severity == 'medium' or finding.severity == 'moderate' %}
-              <td><span class="label label-medium">{{ finding.severity }}</span></td>
+              <td><span class="label label-medium">中等的</span></td>
               {% elif finding.severity == 'low' %}
-              <td><span class="label label-low">{{ finding.severity }}</span></td>
+              <td><span class="label label-low">低风险的</span></td>
               {% else %}
-              <td><span class="label label-info">{{ finding.severity }}</span></td>
+              <td><span class="label label-info">提示信息</span></td>
               {% endif %}
               <td>
                 <div class="btn-group" role="group">
@@ -361,11 +361,11 @@ function toggle(source, element) {
           <table class="table table-hover table-events" id="table-events">
             <thead>
               <tr>
-                <th data-field="event_id">ID</th>
-                <th data-field="event_severity">Severity</th>
-                <th data-field="event_message">Message</th>
-                <th data-field="event_type">Type</th>
-                <th data-field="event_ts" style="width: 200px;">Timestamp</th>
+                <th data-field="event_id">编号</th>
+                <th data-field="event_severity">严重程度</th>
+                <th data-field="event_message">信息</th>
+                <th data-field="event_type">类型</th>
+                <th data-field="event_ts" style="width: 200px;">发现时间</th>
               </tr>
             </thead>
             <tbody>
@@ -420,18 +420,18 @@ function toggle(source, element) {
 
     <!-- Second column -->
     <div class="col-sm-3">
-      <b>Scan details</b> <small>(ID={{ scan.id }})</small>
+      <b>扫描详细信息</b> <small>(ID={{ scan.id }})</small>
       {% if PRO_EDITION %}
         {% if request.user.is_superuser or request.user|has_role:"MANAGER" or request.user|has_role:"ANALYST" %}
-         <button type="button" class="btn btn-xs btn-warning btn-rerun">Re-run !</button>
+         <button type="button" class="btn btn-xs btn-warning btn-rerun">重新运行!</button>
         {% endif %}
       {% else %}
-      <button type="button" class="btn btn-xs btn-warning btn-rerun">Re-run !</button>
+      <button type="button" class="btn btn-xs btn-warning btn-rerun">重新运行!</button>
       {% endif %}
 
       <hr class="my-1">
       <dl class="dl-horizontal">
-        <dt>Title:</dt>
+        <dt>标题:</dt>
         <dd>
 
           {% if PRO_EDITION %}
@@ -445,18 +445,18 @@ function toggle(source, element) {
           {% endif %}
         </dd>
         <!-- <dt>Scan ID:</dt><dd>{{ scan.id }}</dd> -->
-        <dt>Assets:</dt><dd><a data-toggle="modal" data-target="#modal-showall-assets">show all</a><br/></dd>
-        <dt>Engine:</dt><dd>{{ scan.engine.name }} ({{ scan.engine_type.name }})</dd>
-        <dt>Status:</dt><dd>
+        <dt>资产:</dt><dd><a data-toggle="modal" data-target="#modal-showall-assets">展示全部</a><br/></dd>
+        <dt>引擎:</dt><dd>{{ scan.engine.name }} ({{ scan.engine_type.name }})</dd>
+        <dt>状态:</dt><dd>
           {% if scan.status == "finished" %}
-            <span class="label label-success">Finished</span>
+            <span class="label label-success">结束</span>
           {% elif scan.status == "error" %}
-            <span class="label label-danger">Error</span>
+            <span class="label label-danger">错误</span>
           {% else %}
             <span class="label label-warning">{{ scan.status|capfirst }}</span>
           {% endif %}
         </dd>
-        <dt>Policy:</dt>
+        <dt>策略:</dt>
         <dd>
 
           {% if PRO_EDITION %}
@@ -469,12 +469,12 @@ function toggle(source, element) {
           <a href="/engines/policies/edit/{{scan.engine_policy.id}}">{{ scan.engine_policy.name }}</a>
           {% endif %}
         </dd>
-        <dt>Teams</dt><dd>{{ scan.scan_definition.teams.all|join:", " }}</dd>
-        <dt>Owner</dt><dd>{{ scan.scan_definition.owner.username }}</dd>
-        <dt>Started at:</dt><dd>{{ scan.started_at|date:"Y/m/d\-H:i:s" }}</dd>
-        <dt>Finished at:</dt><dd>{{ scan.finished_at|date:"Y/m/d\-H:i:s" }}</dd>
-        <dt>Elapsed:</dt><dd>{{ scan.finished_at|get_time_diff:scan.started_at }}</dd>
-        <dt>Reports:</dt><dd>
+        <dt>团队:</dt><dd>{{ scan.scan_definition.teams.all|join:", " }}</dd>
+        <dt>所有者:</dt><dd>{{ scan.scan_definition.owner.username }}</dd>
+        <dt>开始时间:</dt><dd>{{ scan.started_at|date:"Y/m/d\-H:i:s" }}</dd>
+        <dt>结束时间:</dt><dd>{{ scan.finished_at|date:"Y/m/d\-H:i:s" }}</dd>
+        <dt>扫描时长:</dt><dd>{{ scan.finished_at|get_time_diff:scan.started_at }}</dd>
+        <dt>生成报告:</dt><dd>
           <button type="button" class="btn btn-warning btn-xs" onclick="location.href='/scans/api/v1/report/json/{{ scan.id }}'">json</button>
           <button type="button" class="btn btn-warning btn-xs" onclick="location.href='/scans/api/v1/report/csv/{{ scan.id }}'">csv</button>
           <button type="button" class="btn btn-warning btn-xs" onclick="location.href='/scans/api/v1/report/html/{{ scan.id }}'">html</button>
@@ -483,7 +483,7 @@ function toggle(source, element) {
         </dd>
       </dl>
 
-      <b>Findings summary</b>
+      <b>扫描结果摘要</b>
       <hr class="my-1">
       <div>
         <dl class="dl-horizontal">
@@ -497,7 +497,7 @@ function toggle(source, element) {
             <dd class="text-danger">{{findings_stats.cvss_gte_70_pubdate_30d}}</dd>
           {% else %}<dd>0</dd>{% endif %}
         </dl>
-        <strong>Repartition per severity:</strong>
+        <strong>按严重程度重新划分:</strong>
         <div><canvas id="chart-findings-summary" scan-id="{{ scan.id }}"></canvas></div>
       </div>
     </div>
@@ -508,7 +508,7 @@ function toggle(source, element) {
   {% if messages %}
   <ul class="messages">
       {% for message in messages %}
-      <li {% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message }}</li>
+      <li{% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message }}</li>
       {% endfor %}
   </ul>
   {% endif %}
@@ -524,7 +524,7 @@ function toggle(source, element) {
           <span aria-hidden="true">&times;</span>
           <span class="sr-only">Close</span>
         </button>
-        <h4 class="modal-title" id="myModalLabel">All assets</h4>
+        <h4 class="modal-title" id="myModalLabel">全部资产</h4>
       </div>
 
       <!-- Modal Body -->
@@ -540,7 +540,7 @@ function toggle(source, element) {
             {{a.value|truncatechars:30}}{% if not forloop.last %},{% endif %}
           {% endfor %}
         </div>
-        <button type="button" class="btn btn-xs btn-primary" data-dismiss="modal">Close</button>
+        <button type="button" class="btn btn-xs btn-primary" data-dismiss="modal">关闭</button>
       </div>
     </div>
   </div>
@@ -565,9 +565,9 @@ function toggle(source, element) {
         <p><i>Ex: 'assets:"google" asset.criticity:high findings.title:"ssl certificates"'</i></p>
         <table class="table table-hover">
           <tr>
-            <th scope="col">Prefix</th>
-            <th scope="col">Description</th>
-            <th scope="col">Examples</th>
+            <th>Prefix</th>
+            <th>Description</th>
+            <th>Examples</th>
           </tr>
           <tr>
             <td>a<br/>assets<br/>a.value<br/>asset.value</td>
@@ -848,7 +848,7 @@ function toggle(source, element) {
         $("div#retest-finding").append('\
         <div class="alert alert-dismissible alert-danger">\
           <button type="button" class="close" data-dismiss="alert">&times;</button>\
-          <strong>Error:</strong> Unable to retest finding: '+escapeHtml(data.reason)+'.\
+          <strong>Error:</strong> Unable to retest finding: '+data.reason+'.\
         </div>');
         setTimeout(function(){
           $("div#retest-finding div.alert-danger").remove();

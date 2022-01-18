@@ -2,21 +2,21 @@
 {% block content %}
 
 <ul class="breadcrumb">
-  <li><a href="{% url 'list_assets_view' %}">assets</a></li>
-  <li><a href="/assets/owners/list">owners</a></li>
-  <li class="active">list</li>
+  <li><a href="{% url 'list_assets_view' %}">资产</a></li>
+  <li><a href="/assets/owners/list">所有者</a></li>
+  <li class="active">列表</li>
 </ul>
 
 <div class="container">
   <table class="table table-hover" data-toggle="table" data-sort-name="value" data-sort-order="desc">
     <thead>
       <tr>
-        <th data-field="name">Name</th>
-        <th data-field="nb_assets"># Assets</th>
-        <th data-field="nb_contacts"># Contacts</th>
+        <th data-field="name">名称</th>
+        <th data-field="nb_assets"># 资产</th>
+        <th data-field="nb_contacts"># 联系人</th>
         <!-- <th data-field="nb_documents"># Docs</th> -->
-        <th data-field="updated_at">Last update</th>
-        <th data-field="actions">Actions</th>
+        <th data-field="updated_at">上次更新时间</th>
+        <th data-field="actions">操作</th>
       </tr>
     </thead>
     <tbody>
@@ -38,13 +38,13 @@
     {% endfor %}
     </tbody>
   </table>
-  <a href="/assets/owners/add">+ Add a new asset owner</a><br/>
+  <a href="/assets/owners/add">+ 添加资产所有者</a><br/>
 
   <div class="notifications">
     {% if messages %}
     <ul class="messages">
         {% for message in messages %}
-        <li {% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message }}</li>
+        <li{% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message }}</li>
         {% endfor %}
     </ul>
     {% endif %}
@@ -62,7 +62,7 @@
             <span aria-hidden="true">&times;</span>
             <span class="sr-only">Close</span>
           </button>
-          <h4 class="modal-title" id="myModalLabel">Delete Asset Owner</h4>
+          <h4 class="modal-title" id="myModalLabel">删除资产所有者</h4>
         </div>
 
         <!-- Modal Body -->
@@ -70,10 +70,10 @@
           <div id="delete-owner">
             <!-- Content -->
           </div>
-          Confirm Deleting?
-          <p class="text-danger">Warning ! All contacts and documents will be deleted too.</p>
-          <button type="button" class="btn btn-xs btn-warning btn-delete-owner" data-dismiss="modal">Yes</button>
-          <button type="button" class="btn btn-xs btn-primary" data-dismiss="modal">No</button>
+          确认删除吗？
+          <p class="text-danger">警告所有联系人和文档也将被删除</p>
+          <button type="button" class="btn btn-xs btn-warning btn-delete-owner" data-dismiss="modal">确定</button>
+          <button type="button" class="btn btn-xs btn-primary" data-dismiss="modal">取消</button>
         </div>
       </div>
     </div>

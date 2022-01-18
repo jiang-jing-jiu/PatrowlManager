@@ -3,8 +3,8 @@
 {% block content %}
 
 <ul class="breadcrumb">
-  <li><a href="{% url 'list_rules_view' %}">Rules</a></li>
-  <li class="active">List</li>
+  <li><a href="{% url 'list_rules_view' %}">规则</a></li>
+  <li class="active">列表</li>
 </ul>
 
 <div class="container-fluid">
@@ -12,16 +12,16 @@
     <thead>
       <tr>
         <th data-field="cb"><input type="checkbox" onClick="toggle(this)" /></th>
-        <th data-field="name">Name</th>
-        <th data-field="scope">Scope</th>
+        <th data-field="name">名字</th>
+        <th data-field="scope">范围</th>
         <!-- <th data-field="scope_attr">Attribute</th> -->
-        <th data-field="condition">Condition</th>
-        <th data-field="trigger">Trigger</th>
-        <th data-field="severity">Severity</th>
-        <th data-field="target">Target</th>
-        <th data-field="status">Status</th>
-        <th data-field="updated_at">Last update</th>
-        <th data-field="actions">Actions</th>
+        <th data-field="condition">条件</th>
+        <th data-field="trigger">触发</th>
+        <th data-field="severity">严厉</th>
+        <th data-field="target">目标</th>
+        <th data-field="status">状态</th>
+        <th data-field="updated_at">上次更新</th>
+        <th data-field="actions">行动</th>
       </tr>
     </thead>
     <tbody>
@@ -135,7 +135,7 @@
         </td>
         <td colspan="2">
           <button type="submit" class="btn btn-sm btn-success btn-add-rule col-sm-12">
-            Add</button>
+            添加</button>
         </td>
       </tr>
     </tbody>
@@ -170,7 +170,7 @@
         <li class="disabled"><span>&raquo;</span></li>
       {% endif %}
       {% if rules.number == rules.paginator.num_pages %}
-        <li class="disabled"><span>&raquo;</span></li>
+        <li class="disabled"><span>⇥</span></li>
       {% else %}
         <li class="page-item"><a class="page-link" href="#" onclick="gotopage({{rules.paginator.num_pages}}, 'rules');">&raquo;&raquo;</a></li>
       {% endif %}
@@ -182,7 +182,7 @@
         <option value="100">100</option>
         <option value="200">200</option>
       </select>
-      rules per page
+      条/每页
     </div>
   </div>
 
@@ -190,7 +190,7 @@
   {% if messages %}
   <ul class="messages">
       {% for message in messages %}
-      <li {% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message }}</li>
+      <li{% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message }}</li>
       {% endfor %}
   </ul>
   {% endif %}
@@ -207,7 +207,7 @@
           <span aria-hidden="true">&times;</span>
           <span class="sr-only">Close</span>
         </button>
-        <h4 class="modal-title" id="myModalLabel">Delete Rule ?</h4>
+        <h4 class="modal-title" id="myModalLabel">删除规则 ?</h4>
       </div>
 
       <!-- Modal Body -->
@@ -215,9 +215,9 @@
         <div id="delete-rule">
           <!-- Content -->
         </div>
-        Confirm Deleting?
-        <button type="button" class="btn btn-xs btn-warning btn-delete-rule" data-dismiss="modal">Yes</button>
-        <button type="button" class="btn btn-xs btn-primary" data-dismiss="modal">No</button>
+        确认删除?
+        <button type="button" class="btn btn-xs btn-warning btn-delete-rule" data-dismiss="modal">是</button>
+        <button type="button" class="btn btn-xs btn-primary" data-dismiss="modal">否</button>
       </div>
     </div>
   </div>
@@ -328,8 +328,7 @@
 
       var request = $.ajax({
         url: "{% url 'duplicate_rule_api' 0 %}".replace("0", rule_id),
-        method: "POST",
-        headers: {"X-CSRFToken": "{{ csrf_token }}"},
+        method: "GET",
       });
       request.done(function(response){
         if (response.status == 'success'){location.reload()}
@@ -341,7 +340,7 @@
       rule_id = e.currentTarget.getAttribute('rule-id');
       var request = $.ajax({
         url: "/rules/api/v1/change_status/"+rule_id,
-        method: "POST",
+        method: "GET",
         headers: {"X-CSRFToken": "{{ csrf_token }}"},
         success: function(){
           if (e.currentTarget.textContent == "Disabled") {
@@ -373,7 +372,7 @@
       rule_id = e.relatedTarget.getAttribute('rule-id');
       rule_title = e.relatedTarget.getAttribute('rule-title');
       $("div#delete-rule").attr('rule-id', rule_id);
-      $("div#delete-rule").html("Name: <b>"+encodeURIComponent(rule_title)+"</b><br/>");
+      $("div#delete-rule").html("名称: <b>"+rule_title+"</b><br/>");
     });
     $("button.btn-delete-rule").on('click', function (e) {
       delete_rule_args = {
@@ -408,6 +407,7 @@
         var request = $.ajax({
           url: delete_url,
           method: "POST",
+          // data: JSON.stringify(rules_to_delete),
           data: rules_to_delete,
           contentType: "application/json"
         });

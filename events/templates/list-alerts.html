@@ -26,9 +26,9 @@
 </style>
 
 <ul class="breadcrumb">
-  <li><a href="/events/alerts/list">Alerts</a></li>
+  <li><a href="/events/alerts/list">警报</a></li>
   {% if PRO_EDITION %}
-  <li class="active">
+  <li class="active" style="display:none;">
     Team:
     <select id="team_select" class="form-control form-control-xs" style="width:auto; display:inline-block; padding:0;">
       <option value="-1" selected>All</option>
@@ -38,70 +38,52 @@
     </select>
   </li>
   {% endif %}
-  <li class="active">list</li>
+  <li class="active">列表</li>
 </ul>
 
 <div class="container-fluid">
   <div class="pull-left">
-      <span>Filter by status:</span>
+      <span>状态筛选器:</span>
       <input type='radio' value='reset' id="reset" name='status' style="visibility: hidden" onclick="changeStatusFilter(this);"/>
-      <label for="reset">Reset</label>
+      <label for="reset">重置</label>
       <input type='radio' value='new' id="new" name='status' style="visibility: hidden" onclick="changeStatusFilter(this);"/>
-      <label for="new">New</label>
+      <label for="new">新增</label>
       <input type='radio' value='read' id="read" name='status' style="visibility: hidden" onclick="changeStatusFilter(this);"/>
-      <label for="read">Read</label>
+      <label for="read">读</label>
       <input type='radio' value='archived' id="archived" name='status'  style="visibility: hidden" onclick="changeStatusFilter(this);"/>
-      <label for="archived">Archived</label>
+      <label for="archived">已存档</label>
   </div>
 </div>
 <div class="container-fluid">
   <div class="pull-left">
-      <span>Filter by severity:</span>
+      <span>严重性筛选器:</span>
       <input type='radio' value='all' id="all" name='severity' style="visibility: hidden" onclick="changeSeverityFilter(this);"/>
-      <label for="all">All</label>
+      <label for="all">全部</label>
       <input type='radio' value='info' id="info" name='severity' style="visibility: hidden" onclick="changeSeverityFilter(this);"/>
-      <label for="info">Info</label>
+      <label for="info">信息</label>
       <input type='radio' value='low' id="low" name='severity' style="visibility: hidden" onclick="changeSeverityFilter(this);"/>
-      <label for="low">Low</label>
+      <label for="low">低</label>
       <input type='radio' value='medium' id="medium" name='severity' style="visibility: hidden" onclick="changeSeverityFilter(this);"/>
-      <label for="medium">Medium</label>
+      <label for="medium">中</label>
       <input type='radio' value='high' id="high" name='severity' style="visibility: hidden" onclick="changeSeverityFilter(this);"/>
-      <label for="high">High</label>
+      <label for="high">高</label>
       <input type='radio' value='critical' id="critical" name='severity' style="visibility: hidden" onclick="changeSeverityFilter(this);"/>
-      <label for="critical">Critical</label>
+      <label for="critical">危及</label>
   </div>
 </div>
-<div class="container-fluid">
-  <div class="pull-left">
-      <span>Filter by type:</span>
-      <input type='radio' value='all_types' id="all_types" name='type' style="visibility: hidden" onclick="changeTypeFilter(this);"/>
-      <label for="all_types">All</label>
-      <input type='radio' value='other' id="other" name='type' style="visibility: hidden" onclick="changeTypeFilter(this);"/>
-      <label for="other">Other</label>
-      <input type='radio' value='new_finding' id="new_finding" name='type' style="visibility: hidden" onclick="changeTypeFilter(this);"/>
-      <label for="new_finding">New</label>
-      <input type='radio' value='missing_finding' id="missing_finding" name='type' style="visibility: hidden" onclick="changeTypeFilter(this);"/>
-      <label for="missing_finding">Missing</label>
-      <input type='radio' value='reopened_finding' id="reopened_finding" name='type' style="visibility: hidden" onclick="changeTypeFilter(this);"/>
-      <label for="reopened_finding">Reopened</label>
-  </div>
-</div>
-
-<hr/>
 
 <div class="container-fluid">
   <table class="table table-hover" data-toggle="table" data-sort-name="value" data-sort-order="desc">
     <thead>
       <tr>
         <th data-field="cb"><input type="checkbox" onClick="toggle(this, 'alert')" /></th>
-        <th scope="col">Message</th>
-        <th scope="col">Type</th>
-        <th scope="col">Status</th>
-        <th scope="col">Severity</th>
-        <th scope="col">Finding</th>
-        <th scope="col">Scan</th>
-        <th scope="col">Updated</th>
-        <th scope="col">Actions</th>
+        <th>消息</th>
+        <th>状态</th>
+        <th>严重程度</th>
+        <th>发现</th>
+        <th>扫描</th>
+        <th>更新</th>
+        <th>行动</th>
       </tr>
     </thead>
     <tbody>
@@ -114,7 +96,6 @@
           <!-- - <a href="/findings/details/{{ alert.metadata.finding_id}}?raw=true">finding</a>
           - <a href="/scans/details/{{ alert.metadata.scan_id}}">scan</a> -->
         </td>
-        <td>{{ alert.type }}</td>
         {% if alert.status == 'new' %}
         <td class="text-danger">{{ alert.status }}</td>
         {% else %}
@@ -131,8 +112,7 @@
         {% else %}
         <td><span class="label label-info">{{ alert.severity }}</span></td>
         {% endif %}
-        <!-- <td><span class='glyphicon glyphicon-share-alt'></span><a href="/findings/details/{{ alert.metadata.finding_id}}?raw=true">Finding</a></td> -->
-        <td><span class='glyphicon glyphicon-share-alt'></span><a href="/findings/details/{{ alert.metadata.finding_id}}">Finding</a></td>
+        <td><span class='glyphicon glyphicon-share-alt'></span><a href="/findings/details/{{ alert.metadata.finding_id}}?raw=true">Finding</a></td>
         <td><span class='glyphicon glyphicon-share-alt'></span><a href="/scans/details/{{ alert.metadata.scan_id}}">Scan</a></td>
         <td>{{ alert.updated_at|smartdate }}</td>
         {% if PRO_EDITION %}
@@ -199,33 +179,33 @@
       {% endif %}
     </ul>
     <div style="margin: 21px;">
-      <select id="nb_rows_per_page" class="form-control form-control-xs" style="width:auto; display:inline-block; padding:0;">
-        <option value="20" selected>20</option>
-        <option value="50">50</option>
-        <option value="100">100</option>
-        <option value="200">200</option>
-      </select>
-      alerts per page
-    </div>
+            <select id="nb_rows_per_page" class="form-control form-control-xs" style="width:auto; display:inline-block; padding:0;">
+              <option value="20" selected>20</option>
+              <option value="50">50</option>
+              <option value="100">100</option>
+              <option value="200">200</option>
+            </select>
+            条/每页
+          </div>
   </div>
   <br/>
 
 
   {% if PRO_EDITION %}
     {% if request.user.is_superuser or request.user|has_role:"MANAGER" or request.user|has_role:"ANALYST" %}
-    <a class="btn-read-selected text-warning" href="#">* Mark selected alerts as read</a><br/>
-    <a class="btn-archive-selected text-danger" href="#">! Archive selected alerts</a><br/>
+    <a class="btn-read-selected text-warning" href="#">* 标记选定的警报作为读取</a><br/>
+    <a class="btn-archive-selected text-danger" href="#">! 存档选定的警报</a><br/>
     {% endif %}
   {% else %}
-  <a class="btn-read-selected text-warning" href="#">* Mark selected alerts as read</a><br/>
-  <a class="btn-archive-selected text-danger" href="#">! Archive selected alerts</a><br/>
+  <a class="btn-read-selected text-warning" href="#">* 标记选定的警报作为读取</a><br/>
+  <a class="btn-archive-selected text-danger" href="#">! 存档选定的警报</a><br/>
   {% endif %}
   <br/>
 
   {% if messages %}
   <ul class="messages">
       {% for message in messages %}
-      <li {% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message }}</li>
+      <li{% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message }}</li>
       {% endfor %}
   </ul>
   {% endif %}
@@ -252,14 +232,6 @@
     $('input[name="severity"][id="all"]').prop("checked", true );
   }
 
-  // Set the type filter
-  type = url.searchParams.get('type');
-  if ( ['new_finding', 'missing_finding', 'reopened_finding', 'other'].indexOf(type) >= 0 ) {
-    $('input[name="type"][id="'+type+'"]').prop("checked", true );
-  } else {
-    $('input[name="type"][id="all_types"]').prop("checked", true );
-  }
-
   var gotopage = function gotopage(page_num, target = "alerts") {
     url.searchParams.set("p_alerts", page_num);
     window.location = url.search;
@@ -279,11 +251,6 @@
 
   function changeSeverityFilter(item) {
     url.searchParams.set("severity", item.value);
-    window.location = url.search;
-  }
-
-  function changeTypeFilter(item) {
-    url.searchParams.set("type", item.value);
     window.location = url.search;
   }
 

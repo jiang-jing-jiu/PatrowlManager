@@ -1,15 +1,15 @@
 from django.conf import settings
 from django.utils import timezone
 from django.contrib.auth import get_user_model
-from celery import shared_task, group
+from celery import shared_task, chord, group
 from .models import EngineInstance
-from assets.models import Asset, AssetGroup, AssetCategory
+from assets.models import Asset, AssetGroup
 from events.models import Event
-# from events.utils import new_finding_alert, missing_finding_alert, reopened_finding_alert
-from events.utils import generate_finding_alert
-from findings.models import Finding, RawFinding
+from events.utils import new_finding_alert, missing_finding_alert
+from findings.models import Finding, RawFinding, FindingOverride
 from scans.models import ScanJob, Scan
-from common.utils import chunked_queryset, net, cpe
+from common.utils import chunked_queryset
+from common.utils import net
 import json
 import random
 import requests
@@ -20,10 +20,10 @@ from copy import deepcopy
 # import logging
 # logger = logging.getLogger(__name__)
 
-ENGINE_HTTP_TIMEOUT = getattr(settings, 'ENGINE_HTTP_TIMEOUT', 600)
-SCAN_JOB_DEFAULT_TIMEOUT = getattr(settings, 'SCAN_JOB_DEFAULT_TIMEOUT', 7200)
-SCAN_JOB_DEFAULT_SPLIT_ASSETS = getattr(settings, 'SCAN_JOB_DEFAULT_SPLIT_ASSETS', 100)
-NB_MAX_RETRIES = 5
+ENGINE_HTTP_TIMEOUT=getattr(settings, 'ENGINE_HTTP_TIMEOUT', 600)
+SCAN_JOB_DEFAULT_TIMEOUT=getattr(settings, 'SCAN_JOB_DEFAULT_TIMEOUT', 7200)
+SCAN_JOB_DEFAULT_SPLIT_ASSETS=getattr(settings, 'SCAN_JOB_DEFAULT_SPLIT_ASSETS', 100)
+NB_MAX_RETRIES=5
 
 
 def _get_engine_status(engine):
@@ -48,8 +48,7 @@ def _get_scan_status(engine, scan_id):
     scan_status = "undefined"
 
     try:
-        status_url = f"{engine.api_url}status/{scan_id}"
-        resp = requests.get(url=status_url, verify=False, proxies=settings.PROXIES, timeout=ENGINE_HTTP_TIMEOUT)
+        resp = requests.get(url=str(engine.api_url)+"status/"+str(scan_id), verify=False, proxies=settings.PROXIES, timeout=ENGINE_HTTP_TIMEOUT)
         if resp.status_code == 200:
             scan_status = json.loads(resp.text)['status'].strip().upper()
         else:
@@ -177,7 +176,7 @@ def _run_scan_job(self, evt_prefix, scan_id, assets_subset, position=1, max_time
     # Check Scan status
     if scan.status not in ["started", "enqueued"]:
         Event.objects.create(message="{} BeforeScan - Bad scan status: '{}'. Task aborted.".format(evt_prefix, scan.status), type="ERROR", severity="ERROR", scan=scan)
-        # scan_job.update_status('finished', 'finished_at')
+        scan_job.update_status('finished', 'finished_at')
         return False
 
     scan_job = ScanJob.objects.create(
@@ -262,7 +261,7 @@ def _run_scan_job(self, evt_prefix, scan_id, assets_subset, position=1, max_time
             "datatype": a.type
         })
 
-    scan_params = {
+    scan_params ={
         "assets": assets_list,
         "options": scan.scan_definition.engine_policy.options,
         "engine_id": engine_inst.id,
@@ -270,11 +269,9 @@ def _run_scan_job(self, evt_prefix, scan_id, assets_subset, position=1, max_time
     }
     try:
         resp = requests.post(
-            url=f"{engine_inst.api_url}startscan",
+            url=str(engine_inst.api_url)+"startscan",
             data=json.dumps(scan_params),
-            headers={
-                'Content-type': 'application/json',
-                'Accept': 'application/json'},
+            headers={'Content-type': 'application/json', 'Accept': 'application/json'},
             proxies=settings.PROXIES,
             timeout=ENGINE_HTTP_TIMEOUT
         )
@@ -398,9 +395,10 @@ def _import_findings(findings, scan, engine_name=None, engine_id=None, owner_id=
     - Create new asset if any
     - Create a RawFinding
     - Create ou update a Finding (if new or has changes)
-    - Create an alert for new, missing and reopened Findings
+    - Create an alert if a neww or a missing finding is found
     - Update asset score and scan summary
     """
+
     scan_id = None
     if scan:
         Event.objects.create(message="[EngineTasks/_import_findings()/scan_id={}/{}] Importing findings for scan '{}'.".format(scan.id, scanjob_id, scan.title), type="DEBUG", severity="INFO", scan=scan)
@@ -475,23 +473,23 @@ def _import_findings(findings, scan, engine_name=None, engine_id=None, owner_id=
         for asset in assets:
             # Store finding in the RawFinding table
             new_raw_finding = RawFinding.objects.create(
-                asset=asset,
-                asset_name=asset.value,
-                scan=scan,
-                owner=scan.owner,
-                title=finding['title'],
-                type=finding['type'],
-                confidence=finding['confidence'],
-                severity=finding['severity'],
-                description=finding['description'],
-                solution=finding['solution'],
-                status="new",
-                engine_type=scan.engine_type.name,
-                risk_info=risk_info,
-                vuln_refs=vuln_refs,
-                links=links,
-                tags=tags,
-                raw_data=raw_data
+                asset       = asset,
+                asset_name  = asset.value,
+                scan        = scan,
+                owner       = scan.owner,
+                title       = finding['title'],
+                type        = finding['type'],
+                confidence  = finding['confidence'],
+                severity    = finding['severity'],
+                description = finding['description'],
+                solution    = finding['solution'],
+                status      = "new",
+                engine_type = scan.engine_type.name,
+                risk_info   = risk_info,
+                vuln_refs   = vuln_refs,
+                links       = links,
+                tags        = tags,
+                raw_data    = raw_data
             )
             new_raw_finding.save()
 
@@ -500,18 +498,12 @@ def _import_findings(findings, scan, engine_name=None, engine_id=None, owner_id=
                 new_raw_finding.scopes.add(scope.id)
             new_raw_finding.save()
 
-            # Auto-tag if CPE is set:
-            try:
-                if 'CPE' in new_raw_finding.vuln_refs.keys() and len(new_raw_finding.vuln_refs['CPE']) > 0:
-                    for cpe_vector in new_raw_finding.vuln_refs['CPE']:
-                        _add_cpe_tags(asset, cpe_vector)
-            except Exception:
-                pass
-
             # Check if this finding is new (don't already exists)
             f = Finding.objects.filter(asset=asset, title=finding['title']).only('checked_at', 'status').first()
 
-            # Check description. If CGI in text count the vulnerable parameteres . Only for Nessus
+            #Check description . If CGI in text count the vulnerable parameteres . Only for Nessus
+            count__old_vuln_params =0
+            count__new_vuln_params =0
             tmp_status = "new"
             if scan.engine_type.name == "NESSUS" and "CGI" in finding['title']:
 
@@ -526,22 +518,16 @@ def _import_findings(findings, scan, engine_name=None, engine_id=None, owner_id=
             if f is not None:
                 # We already see you
                 f.checked_at = timezone.now()
-
-                # Reopen a Finding if the same raw finding appears
-                if f.status in ['mitigated', 'patched', 'closed', 'false-positive', 'duplicate']:
-                    f.status = "reopened"
-                    # Send an alert
-                    # reopened_finding_alert(f.id, scan.id, f.severity)
-                    generate_finding_alert(f.id, scan.id, f.severity, 'reopened_finding')
-
+                if f.status in ['patched', 'closed']:
+                    f.status = "undone"
                 f.save()
                 new_raw_finding.status = f.status
                 # new_raw_finding.save()
                 new_raw_finding.save(apply_overrides=True)
 
-                # # Evaluate alerting rules (if any)
+                # Evaluate alerting rules
                 # try:
-                #     f.evaluate_alert_rules(trigger='auto')
+                #     new_raw_finding.evaluate_alert_rules(trigger='auto')
                 # except Exception as e:
                 #     Event.objects.create(message="{} Error in alerting".format(evt_prefix),
                 #         type="ERROR", severity="ERROR", scan=scan, description=str(e))
@@ -551,31 +537,35 @@ def _import_findings(findings, scan, engine_name=None, engine_id=None, owner_id=
                 new_raw_finding.status = tmp_status
                 new_raw_finding.save(apply_overrides=True)
 
+                # Raise an alert
+                # if tmp_status != "duplicate":
+                if tmp_status == "new":
+                    new_finding_alert(new_raw_finding.id, new_raw_finding.severity)
+
                 # Create an event if logging level OK
                 Event.objects.create(
                     message="{} New finding: {}".format(evt_prefix, finding['title']),
                     description="Asset: {}\nFinding: {}".format(asset.value, finding['title']),
                     type="DEBUG", severity="INFO", scan=scan)
-
                 new_finding = Finding.objects.create(
-                    raw_finding=new_raw_finding,
-                    asset=asset,
-                    asset_name=asset.value,
-                    scan=scan,
-                    owner=scan.owner,
-                    title=finding['title'],
-                    type=finding['type'],
-                    confidence=finding['confidence'],
-                    severity=finding['severity'],
-                    description=finding['description'],
-                    solution=finding['solution'],
-                    status=tmp_status,
-                    engine_type=scan.engine_type.name,
-                    risk_info=risk_info,
-                    vuln_refs=vuln_refs,
-                    links=links,
-                    tags=tags,
-                    raw_data=raw_data
+                    raw_finding = new_raw_finding,
+                    asset       = asset,
+                    asset_name  = asset.value,
+                    scan        = scan,
+                    owner       = scan.owner,
+                    title       = finding['title'],
+                    type        = finding['type'],
+                    confidence  = finding['confidence'],
+                    severity    = finding['severity'],
+                    description = finding['description'],
+                    solution    = finding['solution'],
+                    status      = tmp_status,
+                    engine_type = scan.engine_type.name,
+                    risk_info   = risk_info,
+                    vuln_refs   = vuln_refs,
+                    links       = links,
+                    tags        = tags,
+                    raw_data    = raw_data
                 )
                 new_finding.save()
 
@@ -585,34 +575,15 @@ def _import_findings(findings, scan, engine_name=None, engine_id=None, owner_id=
                 new_finding.save()
                 # new_finding.save(apply_overrides=True)
 
-                # Raise an alert
-                if settings.ALERTS_AUTO_NEW_ENABLED is True and tmp_status == "new":
-                    # new_finding_alert(new_finding.id, scan.id, new_finding.severity)
-                    generate_finding_alert(new_finding.id, scan.id, new_finding.severity, "new_finding")
-
-                # Evaluate alerting rules (if any)
+                # Evaluate alerting rules
                 try:
                     new_finding.evaluate_alert_rules(trigger='auto')
                 except Exception as e:
                     Event.objects.create(message="{} Error in alerting".format(evt_prefix),
                         type="ERROR", severity="ERROR", scan=scan, description=str(e))
 
-                # Evaluate asset creation rules (if any)
-                try:
-                    new_finding.evaluate_assets()
-                except Exception as e:
-                    Event.objects.create(message="{} Error in finding evaluation for new assets".format(evt_prefix),
-                        type="ERROR", severity="ERROR", scan=scan, description=str(e))
-
-            # # Evaluate alerting rules
-            # try:
-            #     new_raw_finding.evaluate_alert_rules(trigger='auto')
-            # except Exception as e:
-            #     Event.objects.create(message="{} Error in alerting".format(evt_prefix),
-            #         type="ERROR", severity="ERROR", scan=scan, description=str(e))
-
     scan.save()
-    # scan.update_sumary()
+    scan.update_sumary()
 
     # Reevaluate the risk level of the asset on new risk
     for a in scan.assets.all():
@@ -621,45 +592,15 @@ def _import_findings(findings, scan, engine_name=None, engine_id=None, owner_id=
         ag.calc_risk_grade()
 
     # Search missing findings
-    nb_missing = 0
     # - check if a previous scan exists
     last_scan = scan.scan_definition.scan_set.exclude(id=scan.id).order_by('-id').first()
     if last_scan is not None:
         # Loop in missing findings
         for mf in last_scan.rawfinding_set.exclude(hash__in=known_findings_list):
-            nb_missing += 1
-            # Update the Finding status to 'mitigated'
-            # find related Finding
-            initial_finding = Finding.objects.filter(title=mf.title, asset=mf.asset, engine_type=mf.engine_type).first()
-            if initial_finding is not None and initial_finding.status in ['new', 'ack', 'confirmed', 'reopened']:
-                initial_finding.status = 'mitigated'
-                initial_finding.save()
+            missing_finding_alert(mf.id, scan.id, mf.severity)
 
-            # Create an alert
-            if settings.ALERTS_AUTO_MISSING_ENABLED is True:
-                # missing_finding_alert(initial_finding.id, scan.id, initial_finding.severity)
-                generate_finding_alert(initial_finding.id, scan.id, initial_finding.severity, 'missing_finding')
-
-    scan.update_sumary(missing=nb_missing)
     scan.save()
-
     Event.objects.create(message="{} Findings imported.".format(evt_prefix), type="INFO", severity="INFO", scan=scan)
-    return True
-
-
-def _add_cpe_tags(asset, cpe_vector):
-    vendor, product = cpe.extract_cpe(cpe_vector)
-
-    if vendor is not None:
-        tag, created = AssetCategory.objects.get_or_create(value=f"vendor:{vendor}")
-        if tag not in asset.categories.all():
-            asset.categories.add(tag)
-
-    if product is not None:
-        tag, created = AssetCategory.objects.get_or_create(value=f"product:{product}")
-        if tag not in asset.categories.all():
-            asset.categories.add(tag)
-
     return True
 
 
@@ -710,12 +651,6 @@ def _create_asset_on_import(asset_value, scan, asset_type='unknown', parent=None
     }
     asset = Asset(**asset_args)
     asset.save()
-
-    # Add teams related to scan
-    for team in scan.scan_definition.teams.all():
-        asset.teams.add(team)
-
-    # Add the asset to the scan
     scan.assets.add(asset)
 
     # Then add the asset to every related asset groups
@@ -734,10 +669,10 @@ def _create_asset_on_import(asset_value, scan, asset_type='unknown', parent=None
         if asset_group is None:   # Create an asset group dynamically
             Event.objects.create(message="{} Create a group named : {}".format(evt_prefix, parent), type="DEBUG", severity="INFO", scan=scan)
             assetgroup_args = {
-                'name': "{} assets".format(parent),
-                'criticity': criticity,
-                'description': "AssetGroup dynamically created",
-                'owner': owner
+               'name': "{} assets".format(parent),
+               'criticity': criticity,
+               'description': "AssetGroup dynamically created",
+               'owner': owner
             }
             asset_group = AssetGroup(**assetgroup_args)
             asset_group.save()
@@ -757,10 +692,10 @@ def _create_asset_on_import(asset_value, scan, asset_type='unknown', parent=None
         asset_group = AssetGroup.objects.filter(name=asset_groupname).first()
         if asset_group is None:
             assetgroup_args = {
-                'name': asset_groupname,
-                'criticity': criticity,
-                'description': "AssetGroup dynamically created by policy",
-                'owner': owner
+               'name': asset_groupname,
+               'criticity': criticity,
+               'description': "AssetGroup dynamically created by policy",
+               'owner': owner
             }
             asset_group = AssetGroup(**assetgroup_args)
             asset_group.save()

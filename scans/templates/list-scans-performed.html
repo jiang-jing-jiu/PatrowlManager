@@ -66,9 +66,9 @@ input:checked + label {
 }
 </style>
 <ul class="breadcrumb">
-  <li><a href="/scans/list">scans</a></li>
+  <li><a href="/scans/list">扫描</a></li>
   {% if PRO_EDITION %}
-    <li class="active">
+    <li class="active" style="display:none;">
       Team:
       <select id="team_select" class="form-control form-control-xs" style="width:auto; display:inline-block; padding:0;">
         <option value="-1" selected>All</option>
@@ -78,50 +78,50 @@ input:checked + label {
       </select>
     </li>
   {% endif %}
-  <!-- <li class="active">scans performed [<a href="javascript:goBack()">back</a>]</li> -->
-  <li class="active">Performed</li>
+  <!-- <li class="active">scans performed [<a href="javascript:goBack()">返回</a>]</li> -->
+  <li class="active">执行</li>
 </ul>
 
 <div class="container">
   <div class="pull-left select-scope">
-      <span>Scope:</span>
+      <span>时间范围:</span>
       <input type='radio' value='hour' id="hour" name='scope' checked="checked" style="visibility: hidden"/>
-      <label for="hour">Hour</label>
+      <label for="hour">小时</label>
       <input type='radio' value='day' id="day" name='scope' style="visibility: hidden"/>
-      <label for="day">Day</label>
+      <label for="day">天</label>
       <input type='radio' value='week' id="week" name='scope' style="visibility: hidden"/>
-      <label for="week">Week</label>
+      <label for="week">周</label>
       <input type='radio' value='month' id="month" name='scope' style="visibility: hidden"/>
-      <label for="month">Month</label>
+      <label for="month">月</label>
   </div>
 </div>
 <div class="container">
   <div class="pull-left select-status">
-      <span>Status:</span>
+      <span>状态:</span>
       <!-- <input type='radio' value='all' id="all" name='status' checked="checked" style="visibility: hidden"/> -->
       <input type='radio' value='all' id="all" name='status' style="visibility: hidden"/>
-      <label for="all">All</label>
+      <label for="all">全部</label>
       <input type='radio' value='finished' id="finished" name='status' style="visibility: hidden"/>
-      <label for="finished">Finished</label>
+      <label for="finished">结束</label>
       <input type='radio' value='running' id="running" name='status' style="visibility: hidden"/>
-      <label for="running">Running</label>
+      <label for="running">进行中</label>
       <input type='radio' value='enqueued' id="enqueued" name='status' style="visibility: hidden"/>
-      <label for="enqueued">Enqueued</label>
+      <label for="enqueued">队列中</label>
   </div>
 </div>
 <div class="container">
   <div class="pull-left">
     <button id="cal-heatmap-repeat" class="btn btn-xs btn-default" style="margin-bottom: 10px;" onclick="location.reload()">
       <span class="glyphicon glyphicon-repeat"></span></button>
-    <button id="btn-jumpTo-1m-before" class="btn btn-xs" style="margin-bottom: 10px;" title="1 month before"> < 1m </button>
-    <button id="btn-jumpTo-1w-before" class="btn btn-xs" style="margin-bottom: 10px;" title="1 week before"> < 1w </button>
+    <button id="btn-jumpTo-1m-before" class="btn btn-xs" style="margin-bottom: 10px;" title="1 month before"> < 1周 </button>
+    <button id="btn-jumpTo-1w-before" class="btn btn-xs" style="margin-bottom: 10px;" title="1 week before"> < 1月 </button>
     <button id="cal-heatmap-PreviousDomain-selector" style="margin-bottom: 10px;" class="btn btn-xs">
       <span class="glyphicon glyphicon-chevron-left"></span></button>
-    <button id="btn-jumpTo-today" class="btn btn-xs btn-warning" style="margin-bottom: 10px;">Today</button>
+    <button id="btn-jumpTo-today" class="btn btn-xs btn-warning" style="margin-bottom: 10px;">今天</button>
     <button id="cal-heatmap-NextDomain-selector" style="margin-bottom: 10px;" class="btn btn-xs">
       <span class="glyphicon glyphicon-chevron-right"></span></button>
-    <button id="btn-jumpTo-1w-later" class="btn btn-xs" style="margin-bottom: 10px;" title="1 week later"> > 1w </button>
-    <button id="btn-jumpTo-1m-later" class="btn btn-xs" style="margin-bottom: 10px;" title="1 month later"> > 1m </button>
+    <button id="btn-jumpTo-1w-later" class="btn btn-xs" style="margin-bottom: 10px;" title="1 week later"> > 1周 </button>
+    <button id="btn-jumpTo-1m-later" class="btn btn-xs" style="margin-bottom: 10px;" title="1 month later"> > 1月 </button>
   </div>
 
   <!-- <div class="pull-right">
@@ -133,17 +133,17 @@ input:checked + label {
 <br/>
 
 <div class="container all-scans">
-  <h4>Selection: <b class="scan-selection-title">all scans</b></h4>
+  <h4>选择: <b class="scan-selection-title">所有扫描</b></h4>
   <table class="table table-hover" data-toggle="table" data-sort-name="value" data-sort-order="desc">
     <thead>
       <tr>
         <th data-field="cb"><input type="checkbox" onClick="toggle(this)" /></th>
-        <th data-field="title">Title</th>
-        <th data-field="status">Status</th>
-        <th data-field="progress" style="width:20%">Progress</th>
-        <th data-field="finished_at">Finished at</th>
-        <th data-field="updated_at">Last update</th>
-        <th data-field="actions">Actions</th>
+        <th data-field="title">标题</th>
+        <th data-field="status">状态</th>
+        <th data-field="progress" style="width:20%">进度</th>
+        <th data-field="finished_at">完成时间</th>
+        <th data-field="updated_at">上次更新</th>
+        <th data-field="actions">操作</th>
       </tr>
     </thead>
     <tbody>
@@ -199,7 +199,7 @@ input:checked + label {
         <td>{{ scan.updated_at|smartdate }}</td>
         <td>
           <button type="button" class="btn btn-default btn-xs" title="Details" onclick="location.href='/scans/details/{{ scan.id }}'">
-            details</button>
+            详情</button>
           {% if scan.status == "enqueued" or scan.status == "started" %}
           <button type="button" class="btn btn-danger btn-xs btn-stop-scan" title="Stop scan" scan-id="{{ scan.id }}">
             <span class="glyphicon glyphicon-stop" scan-id="{{ scan.id }}"></span></button>
@@ -210,7 +210,7 @@ input:checked + label {
           {% if PRO_EDITION %}
             {% if request.user.is_superuser or request.user|has_role:"MANAGER" or request.user|has_role:"ANALYST" %}
             <button type="button" class="btn btn-warning btn-xs btn-run-now" scan-id="{{ scan.scan_def_id }}" scan-title="{{ scan.title }}" data-toggle="modal" data-target="#modal-run-scan">
-              Run </button>
+             运行</button>
             <button type="button" class="btn btn-danger btn-xs" data-toggle="modal" data-target="#modal-delete-scan"
               scan-id="{{ scan.id }}" scan-title="{{ scan.title }} [{{ scan.eng_type }}]">
               <span class="glyphicon glyphicon-remove"></button>
@@ -231,14 +231,14 @@ input:checked + label {
   <div>
     {% if PRO_EDITION %}
       {% if request.user.is_superuser or request.user|has_role:"MANAGER" or request.user|has_role:"ANALYST" %}
-    <a class="text-danger btn-delete-selected" href="#">- Delete selected scans (no confirm)</a><br/>
-    <a class="text-warning btn-stop-selected" href="#">x Stop selected scans (no confirm)</a><br/>
+    <a class="text-danger btn-delete-selected" href="#">- 删除选定的扫描（无确认）</a><br/>
+    <a class="text-warning btn-stop-selected" href="#">x 停止选定的扫描（无确认）x</a><br/>
       {% endif %}
     {% else %}
-    <a class="text-danger btn-delete-selected" href="#">- Delete selected scans (no confirm)</a><br/>
-    <a class="text-warning btn-stop-selected" href="#">x Stop selected scans (no confirm)</a><br/>
+    <a class="text-danger btn-delete-selected" href="#">- 删除选定的扫描（无确认）</a><br/>
+    <a class="text-warning btn-stop-selected" href="#">x 停止选定的扫描（无确认）</a><br/>
     {% endif %}
-    <a class="text-default btn-compare-selected" href="#">// Compare selected scans (2 scans max.)</a>
+    <a class="text-default btn-compare-selected" href="#">// 比较选定的扫描（最大扫描 2 次）</a>
   </div>
 
   <div style="display: inline-flex;">
@@ -277,7 +277,7 @@ input:checked + label {
   {% if messages %}
   <ul class="messages">
       {% for message in messages %}
-      <li {% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message }}</li>
+      <li{% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message }}</li>
       {% endfor %}
   </ul>
   {% endif %}
@@ -301,9 +301,9 @@ input:checked + label {
         <div id="delete-scan">
           <!-- Content -->
         </div>
-        Confirm Deleting?
-        <button type="button" class="btn btn-xs btn-warning btn-delete-scan" data-dismiss="modal">Yes</button>
-        <button type="button" class="btn btn-xs btn-primary" data-dismiss="modal">No</button>
+        确定删除?
+        <button type="button" class="btn btn-xs btn-warning btn-delete-scan" data-dismiss="modal">是</button>
+        <button type="button" class="btn btn-xs btn-primary" data-dismiss="modal">否</button>
       </div>
     </div>
   </div>
@@ -467,7 +467,7 @@ input:checked + label {
         for (i = 0; i < data.length; ++i){
           scan_row_html = "<tr class='dblclickable-row' data-href='/scans/details/"+data[i]["scan_id"]+"'>\
             <td><input type='checkbox' class='radio' name='scan' value='"+data[i]["scan_id"]+"'/></td>\
-            <td><a href='/scans/details/"+data[i]["scan_id"]+"'>["+escapeHtml(data[i]["engine_type"])+"] "+escapeHtml(data[i]["title"])+"</a></td>"
+            <td><a href='/scans/details/"+data[i]["scan_id"]+"'>["+data[i]["engine_type"]+"] "+data[i]["title"]+"</a></td>"
             //<td><a href='/scans/defs/details/"+data[i]["scan_definition_id"]+"'>["+data[i]["engine_type"]+"] "+data[i]["title"]+"</a></td>"
 
           if (data[i]["status"] == "started"){
@@ -509,10 +509,10 @@ input:checked + label {
             <button type='button' class='btn btn-default btn-xs' title='Details' onclick='location.href=\"/scans/details/"+data[i]["scan_id"]+"\"'>details</button>\
               <button type='button' class='btn btn-default btn-xs' title='Export scan findings' onclick='location.href=\"/scans/api/v1/report/html/"+data[i]["scan_id"]+"\"'>\
                 <span class='glyphicon glyphicon-share'></span></button>\
-              <button type='button' class='btn btn-warning btn-xs btn-run-now' scan-id='"+data[i]["scan_definition_id"]+"' scan-title='"+escapeHtml(data[i]["title"])+"' data-toggle='modal' data-target='#modal-run-scan'>\
+              <button type='button' class='btn btn-warning btn-xs btn-run-now' scan-id='"+data[i]["scan_definition_id"]+"' scan-title='"+data[i]["title"]+"' data-toggle='modal' data-target='#modal-run-scan'>\
                 Run </button>\
               <button type='button' class='btn btn-danger btn-xs' data-toggle='modal' data-target='#modal-delete-scan'\
-                scan-id='"+data[i]["scan_id"]+"' scan-title='"+escapeHtml(data[i]["title"])+" ["+escapeHtml(data[i]["engine_type"])+"]'>\
+                scan-id='"+data[i]["scan_id"]+"' scan-title='"+data[i]["title"]+" ["+data[i]["engine_type"]+"]'>\
                 <span class='glyphicon glyphicon-remove'></button></td>\
           </tr>";
           $("div.container.all-scans table tbody").append(scan_row_html);
@@ -571,7 +571,7 @@ input:checked + label {
     $("#filter_startdate").datetimepicker({
       minuteStep: 5,
       autoclose: true,
-      language: 'en',
+      language: 'zh-CN',
       format: 'yyyy-mm-dd hh:ii:ss',
       clearBtn: true,
       //pickerPosition: 'bottom-right',
@@ -581,7 +581,7 @@ input:checked + label {
     $("#filter_enddate").datetimepicker({
       minuteStep: 5,
       autoclose: true,
-      language: 'en',
+      language: 'zh-CN',
       format: 'yyyy-mm-dd hh:ii:ss',
       clearBtn: true,
       //pickerPosition: 'bottom-right',
@@ -592,7 +592,7 @@ input:checked + label {
     // Run direct scan now Event
     $("#modal-run-scan").on('show.bs.modal', function (e) {
       scan_title = e.relatedTarget.getAttribute('scan-title');
-      $("div#run-scan").html("Scan started: <b>"+escapeHtml(scan_title)+"</b><br/><br/>");
+      $("div#run-scan").html("Scan started: <b>"+scan_title+"</b><br/><br/>");
 
       //Hide the modal 3 seconds later
       var myModal = $(this);
@@ -613,7 +613,7 @@ input:checked + label {
       id = e.relatedTarget.getAttribute('scan-id');
       scan_title = e.relatedTarget.getAttribute('scan-title');
       $("div#delete-scan").attr('scan-id', id);
-      $("div#delete-scan").html("Title: <b>"+escapeHtml(scan_title)+"</b><br/><br/>");
+      $("div#delete-scan").html("标题: <b>"+scan_title+"</b><br/><br/>");
     });
     $("button.btn-delete-scan").on('click', function (e) {
       id = $("div#delete-scan").attr('scan-id');

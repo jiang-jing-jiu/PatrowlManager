@@ -1,5 +1,4 @@
 {% extends 'base.html' %}
-{% load patrowl_tags %}
 {% block content %}
 <style>
 
@@ -20,11 +19,11 @@ label.radio {
 
 <div class="container">
   <form action="/assets/groups/edit/{{ assetgroup_id }}" method="post" class="form-horizontal">
-    <legend>Edit an asset group</legend>
+    <legend>编辑资产组</legend>
     {% csrf_token %}
      <!-- Title -->
     <div class="form-group">
-      <label class="col-sm-2 control-label" for="id_name">Title</label>
+      <label class="col-sm-2 control-label" for="id_name">标题</label>
       <div class="col-sm-5">
         <input id="id_name" name="name" type="text" placeholder="Enter a title..." required class="form-control" value="{{asset_group.name}}"/>
       </div>
@@ -32,7 +31,7 @@ label.radio {
 
     <!-- Description -->
     <div class="form-group">
-      <label class="col-sm-2 control-label" for="id_description">Description</label>
+      <label class="col-sm-2 control-label" for="id_description">描述</label>
       <div class="col-sm-5">
         <textarea cols="40" id="id_description" name="description" placeholder="Enter a quick description..." rows="5" class="form-control">{{asset_group.description}}</textarea>
       </div>
@@ -40,28 +39,23 @@ label.radio {
 
     <!-- Criticality -->
     <div class="form-group">
-      <label class="col-sm-2 control-label" for="id_criticity">Criticality</label>
+      <label class="col-sm-2 control-label" for="id_criticity">等级</label>
       <div class="col-sm-5">
         <select name="criticity" class="form-control form-control-sm" id="id_criticity">
-          <option value="low" {% if asset_group.criticity == "low" %}selected{%endif%}>low</option>
-          <option value="medium" {% if asset_group.criticity == "medium" %}selected{%endif%}>medium</option>
-          <option value="high" {% if asset_group.criticity == "high" %}selected{%endif%}>high</option>
+          <option value="low">低</option>
+          <option value="medium">中</option>
+          <option value="high">高</option>
         </select>
       </div>
-
     </div>
 
     <!-- Teams -->
     <div class="form-group">
-      <label class="col-sm-2 control-label" for="id_teams">Teams</label>
+      <label class="col-sm-2 control-label" for="id_team_list">分组</label>
       <div class="col-sm-5">
-        <select class="form-control form-control-sm" id="id_teams" name="teams" size="4" multiple>
+        <select class="form-control form-control-sm" id="id_scan_team_list" name="scan_team_list" disabled>
           {% for team in teams_list %}
-            {% if team.name in asset_group.teams.all|attr:"name" %}
-            <option value="{{team.id}}" selected>{{team.name}}</option>
-            {% else %}
-            <option value="{{team.id}}">{{team.name}}</option>
-            {% endif %}
+          <option value="{{team.id}}">{{team.name}}</option>
           {% endfor %}
         </select>
       </div>
@@ -69,10 +63,10 @@ label.radio {
 
     <!-- Asset selection -->
     <div class="form-group">
-      <label class="col-sm-2 control-label" for="id_assets_list">Search asset(s):</label>
+      <label class="col-sm-2 control-label" for="id_assets_list">搜索资产:</label>
       <div class="col-sm-5 has-feedback">
         <div id="scrollable-dropdown-menu">
-          <input class="typeahead form-control" type="text" placeholder="Search assets">
+          <input class="typeahead form-control" type="text" placeholder="搜索资产">
           <i class="form-control-feedback glyphicon glyphicon-search"></i>
         </div>
       </div>
@@ -80,7 +74,7 @@ label.radio {
 
     <!-- Selected assets and asset groups -->
     <div class="form-group">
-      <label class="col-sm-2 control-label" for="id_assets_list">Asset(s) selected:</label>
+      <label class="col-sm-2 control-label" for="id_assets_list">选择资产组:</label>
       <div class="col-sm-5">
         <div class="custom-control custom-checkbox cbx_assets">
           <!-- list of selected assets -->
@@ -91,19 +85,19 @@ label.radio {
     <div class="form-group submit-div">
       <div class="col-sm-2">
       </div>
-      <div class="col-sm-5">
-        <button type="submit" class="btn btn-warning col-sm-12 form-control-sm">Modify the asset group</button>
+      <div class="col-sm-4">
+        <button type="submit" class="btn btn-warning col-sm-12 form-control-sm">更新资产组</button>
         <br/>
         <br/>
         <button class="btn btn-danger col-sm-12 form-control-sm" type="button" data-toggle="modal" data-target="#modal-delete-asset-group"
-          asset-group-id="{{ asset_group.id }}" asset-group-value="{{ asset_group.name }}">Delete</button>
+          asset-group-id="{{ asset_group.id }}" asset-group-value="{{ asset_group.name }}">删除</button>
       </div>
     </div>
   </form>
   {% if messages %}
   <ul class="messages">
       {% for message in messages %}
-      <li {% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message }}</li>
+      <li{% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message }}</li>
       {% endfor %}
   </ul>
   {% endif %}
@@ -119,7 +113,7 @@ label.radio {
           <span aria-hidden="true">&times;</span>
           <span class="sr-only">Close</span>
         </button>
-        <h4 class="modal-title" id="myModalLabel">Delete Asset Group</h4>
+        <h4 class="modal-title" id="myModalLabel">删除资产组</h4>
       </div>
 
       <!-- Modal Body -->
@@ -127,9 +121,9 @@ label.radio {
         <div id="delete-asset-group">
           <!-- Content -->
         </div>
-        Confirm Deleting?
-        <button type="button" class="btn btn-xs btn-danger btn-delete-asset-group" data-dismiss="modal">Yes</button>
-        <button type="button" class="btn btn-xs btn-primary" data-dismiss="modal">No</button>
+        确认删除?
+        <button type="button" class="btn btn-xs btn-danger btn-delete-asset-group" data-dismiss="modal">是</button>
+        <button type="button" class="btn btn-xs btn-primary" data-dismiss="modal">否</button>
       </div>
     </div>
   </div>
@@ -180,7 +174,7 @@ $(function() {
           return '<div class="noitems"> No items found</div>';
         },
         suggestion: function(data) {
-            return '<div>' + escapeHtml(data.value) + ' - '+ escapeHtml(data.name) + '</div>';
+            return '<div>' + data.value + ' - '+ data.name + '</div>';
         }
       }
     }).bind("typeahead:selected", function(e, datum, name) {
@@ -200,7 +194,7 @@ $(function() {
     id = e.relatedTarget.getAttribute('asset-group-id');
     asset_group_value = e.relatedTarget.getAttribute('asset-group-value');
     $("div#delete-asset-group").attr('asset-group-id', id);
-    $("div#delete-asset-group").html("Asset Group Name: <strong>"+asset_group_value+"</strong><br/><br/>");
+    $("div#delete-asset-group").html("资产组名称: <b>"+asset_group_value+"</b><br/><br/>");
   });
   $("button.btn-delete-asset-group").on('click', function (e) {
     id = $("div#delete-asset-group").attr('asset-group-id');

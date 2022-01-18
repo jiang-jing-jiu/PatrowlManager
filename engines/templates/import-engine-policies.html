@@ -2,13 +2,13 @@
 {% block content %}
 
 <ul class="breadcrumb">
-  <li><a href="/engines/policies/list">policies</a></li>
-  <li class="active">Import policies</li>
+  <li><a href="/engines/policies/list">策略</a></li>
+  <li class="active">导入策略</li>
 </ul>
 
 <div class="container">
   <form action="/engines/policies/import" method="post" class="form-horizontal" enctype="multipart/form-data">
-    <legend>Import engine policies (JSON-formatted)</legend>
+    <legend>导入引擎策略（JSON格式）</legend>
       {% csrf_token %}
       {% for field in form %}
           {% if field.errors %}
@@ -34,8 +34,8 @@
           {% endif %}
       {% endfor %}
       <div class="form-group">
-        <button type="submit" class="btn btn-primary">Submit</button>
-        <button class="btn btn-primary"><a href="/engines/policies/list">Cancel</a></button>
+        <button type="submit" class="btn btn-primary">提交</button>
+        <button class="btn btn-primary"><a href="/engines/policies/list">取消</a></button>
       </div>
   </form>
 </div>

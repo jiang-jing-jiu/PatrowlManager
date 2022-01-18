@@ -12,7 +12,6 @@ from .utils import _search_findings
 from assets.models import Asset
 from users.models import Team, TeamUser
 from engines.tasks import importfindings_task
-from engines.models import Engine
 from assets.models import AssetOwner
 import os
 import time
@@ -34,10 +33,11 @@ def list_findings_view(request):
             })
 
     findings = _search_findings(request)
+    nb_findings = findings.count()
 
     # Pagination findings
     nb_rows = request.GET.get('n', 50)
-    findings_paginator = Paginator(findings.order_by('-updated_at'), nb_rows)
+    findings_paginator = Paginator(findings, nb_rows)
     page = request.GET.get('page')
     owners = AssetOwner.objects.all()
     try:
@@ -49,8 +49,8 @@ def list_findings_view(request):
 
     return render(request, 'list-findings.html', {
         'findings': findings_p,
+        'nb_findings': nb_findings,
         'teams': teams,
-        'engines': Engine.objects.all().values('name').order_by('name'),
         'owners': owners
     })
 
@@ -67,7 +67,7 @@ def list_asset_findings_view(request, asset_name):
         filters.update({"status": filter_by_status})
 
     findings = Finding.objects.for_user(request.user).filter(**filters).order_by(
-        'asset_name', 'severity', 'status', 'type')
+             'asset_name', 'severity', 'status', 'type')
 
     return render(request, 'list-findings.html', {'findings': findings})
 

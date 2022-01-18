@@ -17,15 +17,15 @@ class AssetForm(forms.ModelForm):
             'categories', 'teams', 'exposure']
         widgets = {
             'id': forms.HiddenInput(),
-            'value': forms.TextInput(attrs={'class': 'form-control form-control-sm'}),
-            'name': forms.TextInput(attrs={'class': 'form-control form-control-sm'}),
-            'description': forms.Textarea(attrs={'class': 'form-control form-control-sm', 'rows': '4'}),
+            'value': forms.TextInput(attrs={'class': 'form-control form-control-sm','placeholder': "请输入资产值..."}),
+            'name': forms.TextInput(attrs={'class': 'form-control form-control-sm','placeholder':'请输入资产名称...'}),
+            'description': forms.Textarea(attrs={'class': 'form-control form-control-sm', 'rows': '4','placeholder': '请输入资产描述...'}),
             'categories': forms.SelectMultiple(attrs={'class': 'form-control form-control-sm', 'size': '4'})
         }
 
-    type = forms.CharField(widget=forms.Select(choices=ASSET_TYPES, attrs={'class': 'form-control form-control-sm'}))
-    criticity = forms.CharField(widget=forms.Select(choices=ASSET_CRITICITIES, attrs={'class': 'form-control form-control-sm'}))
-    exposure = forms.CharField(widget=forms.Select(choices=ASSET_EXPOSURES, attrs={'class': 'form-control form-control-sm'}))
+    type = forms.CharField(label="类型", widget=forms.Select(choices=ASSET_TYPES, attrs={'class': 'form-control form-control-sm'}))
+    criticity = forms.CharField(label="等级", widget=forms.Select(choices=ASSET_CRITICITIES, attrs={'class': 'form-control form-control-sm','placeholder':'请输入等级...'}))
+    exposure = forms.CharField(label='权限', widget=forms.Select(choices=ASSET_EXPOSURES, attrs={'class': 'form-control form-control-sm'}))
 
     def __init__(self, *args, **kwargs):
         self.user = kwargs.pop('user', None)
@@ -68,7 +68,7 @@ class AssetGroupForm(forms.ModelForm):
         super(AssetGroupForm, self).__init__(*args, **kwargs)
 
         # @Todo: RBAC_CHECK
-        assets = [Asset.objects.for_user(self.user).all().only('id', 'value').order_by('value').values()]
+        assets = [(asset.id, asset.value) for asset in Asset.objects.for_user(self.user).all().order_by('value')]
         self.fields['assets'].widget = forms.CheckboxSelectMultiple(choices=assets)
 
         # Check allowed teams (Available in Pro Edition)
@@ -96,8 +96,7 @@ class AssetOwnerForm(forms.ModelForm):
         self.user = kwargs.pop('user', None)
         super(AssetOwnerForm, self).__init__(*args, **kwargs)
 
-        # assets = [(asset.id, asset.value) for asset in Asset.objects.for_user(self.user).all()]
-        assets = [Asset.objects.for_user(self.user).all().only('id', 'value').order_by('value').values()]
+        assets = [(asset.id, asset.value) for asset in Asset.objects.for_user(self.user).all()]
         self.fields['assets'].widget = forms.CheckboxSelectMultiple(choices=assets)
 
 

@@ -3,8 +3,8 @@
 {% block content %}
 
 <ul class="breadcrumb">
-  <li><a href="{% url 'list_engines_view' %}">engines</a></li>
-  <li class="active">policies</li>
+  <li><a href="{% url 'list_engines_view' %}">引擎</a></li>
+  <li class="active">策略</li>
 </ul>
 
 <div class="container">
@@ -15,10 +15,10 @@
     <thead>
       <tr>
         <th data-field="cb"><input type="checkbox" onClick="toggle(this)" /></th>
-        <th data-field="engine_name">Engine Name</th>
-        <th data-field="name">Name (<span class="glyphicon glyphicon-file"></span>: policy file included)</th>
-        <th data-field="updated_at">Last update</th>
-        <th data-field="actions">Actions</th>
+        <th data-field="engine_name">引擎名称</th>
+        <th data-field="name">名称 (<span class="glyphicon glyphicon-file"></span>: 包含策略文件)</th>
+        <th data-field="updated_at">上次更新</th>
+        <th data-field="actions">操作</th>
       </tr>
     </thead>
     <tbody>
@@ -41,15 +41,15 @@
                 <h4 class="modal-title">{{ policy.name }}</h4>
               </div>
               <div class="modal-body">
-                <p>{{ policy.description }}</p>
-                <p>Engine: {{ policy.type }}</p>
-                <p>Options: {{ policy.options }}</p>
-                <p>Scopes: {{ policy.scopes.all|join:", " }}</p>
-                <p>Status: {{ policy.status }}</p>
-                <p>Is default?: {{ policy.default }}</p>
+                <p>标题：{{ policy.description }}</p>
+                <p>引擎: {{ policy.type }}</p>
+                <p>选项: {{ policy.options }}</p>
+                <p>范围: {{ policy.scopes.all|join:", " }}</p>
+                <p>状态: {{ policy.status }}</p>
+                <p>是否默认?: {{ policy.default }}</p>
               </div>
               <div class="modal-footer">
-                <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-default" data-dismiss="modal">关闭</button>
               </div>
             </div>
           </div>
@@ -94,20 +94,20 @@
   </table>
   {% if PRO_EDITION %}
       {% if request.user.is_superuser or request.user|has_role:"MANAGER" %}
-      <a href="{% url 'add_policy_view' %}">+ Add a new policy</a><br/>
-      <a href="{% url 'import_policies_view' %}"># Import policies</a><br/>
+      <a href="{% url 'add_policy_view' %}">+ 添加新策略</a><br/>
+      <a href="{% url 'import_policies_view' %}"># 导入策略</a><br/>
       {% endif %}
   {% else %}
-    <a href="{% url 'add_policy_view' %}">+ Add a new policy</a><br/>
-    <a href="{% url 'import_policies_view' %}"># Import policies</a><br/>
+    <a href="{% url 'add_policy_view' %}">+ 添加新策略</a><br/>
+    <a href="{% url 'import_policies_view' %}"># 导入策略</a><br/>
   {% endif %}
-  <a class="text-warning btn-export-selected" href="#">* Export selected policies</a> or <a href="{% url 'export_policies_api' %}?all=true" class="text-warning">* Export all policies</a><br/>
+  <a class="text-warning btn-export-selected" href="#">* 导出选定策略</a> or <a href="{% url 'export_policies_api' %}?all=true" class="text-warning">* 导出所有策略</a><br/>
 
 
   {% if messages %}
   <ul class="messages">
       {% for message in messages %}
-      <li {% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message }}</li>
+      <li{% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message }}</li>
       {% endfor %}
   </ul>
   {% endif %}
@@ -123,7 +123,7 @@
           <span aria-hidden="true">&times;</span>
           <span class="sr-only">Close</span>
         </button>
-        <h4 class="modal-title" id="myModalLabel">Delete Policy</h4>
+        <h4 class="modal-title" id="myModalLabel">删除策略</h4>
       </div>
 
       <!-- Modal Body -->
@@ -131,9 +131,9 @@
         <div id="delete-policy">
           <!-- Content -->
         </div>
-        Confirm Deleting?
-        <button type="button" class="btn btn-xs btn-warning btn-delete-policy" data-dismiss="modal" autofocus>Yes</button>
-        <button type="button" class="btn btn-xs btn-primary" data-dismiss="modal">No</button>
+        确认删除?
+        <button type="button" class="btn btn-xs btn-warning btn-delete-policy" data-dismiss="modal" autofocus>是</button>
+        <button type="button" class="btn btn-xs btn-primary" data-dismiss="modal">否</button>
       </div>
     </div>
   </div>
@@ -185,7 +185,7 @@
       policy_id = e.relatedTarget.getAttribute('policy-id');
       policy_name = e.relatedTarget.getAttribute('policy-name');
       $("div#delete-policy").attr('policy-id', policy_id);
-      $("div#delete-policy").html("Policy: <b>"+escapeHtml(policy_name)+"</b><br/><br/>");
+      $("div#delete-policy").html("策略: <b>"+policy_name+"</b><br/><br/>");
     });
     $("button.btn-delete-policy").on('click', function (e) {
       policy_id = $("div#delete-policy").attr('policy-id');

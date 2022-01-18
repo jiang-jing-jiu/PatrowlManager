@@ -22,6 +22,7 @@ from common.utils import pro_group_required
 from datetime import timedelta, datetime
 import shlex
 import json
+import random
 
 
 @pro_group_required('ScansManager', 'ScansViewer')
@@ -94,10 +95,10 @@ def detail_scan_view(request, scan_id):
 
     # Search raw findings related to the asset
     if findings_filters == {}:
-        raw_findings = RawFinding.objects.prefetch_related('scan').filter(scan=scan).only("id", "asset_name", "title", "severity", "status", "scan").order_by('asset', 'severity', 'type', 'title')
+        raw_findings = RawFinding.objects.filter(scan=scan).only("id", "asset_name", "title", "severity", "status").order_by('asset', 'severity', 'type', 'title')
     else:
         findings_filters.update({"scan": scan})
-        raw_findings = RawFinding.objects.prefetch_related('scan').filter(**findings_filters).only("id", "asset_name", "title", "severity", "status", "scan").order_by('asset', 'severity', 'type', 'title')
+        raw_findings = RawFinding.objects.filter(**findings_filters).only("id", "asset_name", "title", "severity", "status").order_by('asset', 'severity', 'type', 'title')
 
     # Generate summary info on assets (for progress bars)
     summary_assets = {}
@@ -146,7 +147,7 @@ def detail_scan_view(request, scan_id):
             })
 
     # Generate findings stats
-    month_ago = datetime.today() - timedelta(days=30)
+    month_ago = datetime.today()-timedelta(days=30)
     findings_stats = {
         "count": raw_findings.count(),
         "cvss_gte_70": raw_findings.filter(risk_info__cvss_base_score__gte=7.0).count(),
@@ -233,18 +234,23 @@ def list_scans_view(request):
             scans_filters.update({
                 'status__in': ["finished", "error", "stopped"]
             })
+            
+    if request.user.id > 1:
+        scans_filters.update({
+            'owner_id' : request.user.id
+        })
 
     if teamid_selected >= 0:
         scan_list = Scan.objects.for_team(request.user, teamid_selected).filter(**scans_filters).annotate(
             scan_def_id=F("scan_definition__id"), eng_type=F("engine_type__name")
             ).only(
-                "engine_type", "title", "status", "summary", "updated_at", "finished_at"
+            "engine_type", "title", "status", "summary", "updated_at"
             ).order_by('-finished_at')
     else:
         scan_list = Scan.objects.for_user(request.user).filter(**scans_filters).annotate(
             scan_def_id=F("scan_definition__id"), eng_type=F("engine_type__name")
             ).only(
-                "engine_type", "title", "status", "summary", "updated_at", "finished_at"
+            "engine_type", "title", "status", "summary", "updated_at"
             ).order_by('-finished_at')
 
     paginator = Paginator(scan_list, 10)
@@ -280,11 +286,19 @@ def list_scan_def_view(request):
             })
 
     scans = Scan.objects.all()
+    
+    # 2021.11.28 权限增加
+    filters = {}
+    if request.user.id > 1:
+        filters.update({
+            'owner_id': request.user.id
+    })
+
 
     if teamid_selected >= 0:
-        scan_defs_all = ScanDefinition.objects.for_team(request.user, teamid_selected).all().order_by('-updated_at').annotate(scan_count=Count('scan')).annotate(engine_type_name=F('engine_type__name'))
+        scan_defs_all = ScanDefinition.objects.for_team(request.user, teamid_selected).filter(**filters).all().order_by('-updated_at').annotate(scan_count=Count('scan')).annotate(engine_type_name=F('engine_type__name'))
     else:
-        scan_defs_all = ScanDefinition.objects.for_user(request.user).all().order_by('-updated_at').annotate(scan_count=Count('scan')).annotate(engine_type_name=F('engine_type__name'))
+        scan_defs_all = ScanDefinition.objects.for_user(request.user).filter(**filters).all().order_by('-updated_at').annotate(scan_count=Count('scan')).annotate(engine_type_name=F('engine_type__name'))
 
     # Pagination of findings
     nb_items = int(request.GET.get('n', 50))
@@ -336,14 +350,20 @@ def add_scan_def_view(request):
     request_user_id = request.user.id
     scan_cats = EnginePolicyScope.objects.all().order_by('name').values()
     scan_policies = EnginePolicy.objects.all().prefetch_related("engine", "scopes").order_by(Lower('name'))
-
+    
+    # 2021.12.1 权限新增
+    filters = {}
+    if request.user.id > 1:
+        filters.update({
+            'user_id':request.user.id
+        })
     scan_engines = []
-    for sc in EngineInstance.objects.all().values('engine__name', 'engine__id').order_by('engine__name').distinct():
+    for sc in EngineInstance.objects.filter(**filters).all().values('engine__name', 'engine__id').order_by('engine__name').distinct():
         scan_engines.append({
             'id': sc['engine__id'],
             'name': sc['engine__name']
         })
-    scan_engines_json = json.dumps(list(EngineInstance.objects.all().values('id', 'name', 'engine__name', 'engine__id')))
+    scan_engines_json = json.dumps(list(EngineInstance.objects.filter(**filters).all().values('id', 'name', 'engine__name', 'engine__id')))
     teams_list = request.user.users_team.values('id', 'name').order_by('name')
 
     scan_policies_json = []
@@ -385,11 +405,18 @@ def add_scan_def_view(request):
                 except Exception:
                     scan_definition.scheduled_at = None
                     scan_definition.enabled = False
-
+        
             if int(form.data['engine_id']) > 0:
                 # todo: check if the engine is compliant with the scan policy
                 scan_definition.engine = EngineInstance.objects.get(id=int(form.data['engine_id']))
-
+            # 如果前端用户选择了random 2021.12.6 ————此处需要判断engine类型，防止引擎类型溢出
+            else:
+                ids = [] # 该用户对应的所有探针id
+                result = EngineInstance.objects.filter(**filters).all()
+                for i in result:
+                    ids.append(i.id)
+                #raise Exception(ids[random.randint(0,len(ids)-1)])
+                scan_definition.engine = EngineInstance.objects.get(id=ids[random.randint(0,len(ids)-1)])
             scan_definition.save()
 
             # Check and add team(s)
@@ -499,25 +526,26 @@ def edit_scan_def_view(request, scan_def_id):
     request_user_id = request.user.id
     scan_definition = get_object_or_404(ScanDefinition, id=scan_def_id)
     scan_cats = EnginePolicyScope.objects.all().values()
-    # scan_policies = list(EnginePolicy.objects.all().prefetch_related("engine", "scopes"))
-    scan_policies = EnginePolicy.objects.prefetch_related("engine", "scopes").all().order_by(Lower('name'))
+    scan_policies = list(EnginePolicy.objects.all().prefetch_related("engine", "scopes"))
+    
+    # 2021.12.1 权限新增
+    filters = {}
+    if request.user.id > 1:
+        filters.update({
+            'user_id':request.user.id
+        })
     scan_engines = []
-    for sc in EngineInstance.objects.all().values('engine__name', 'engine__id').order_by('engine__name').distinct():
+    for sc in EngineInstance.objects.filter(**filters).all().values('engine__name', 'engine__id').order_by('engine__name').distinct():
         scan_engines.append({
             'id': sc['engine__id'],
             'name': sc['engine__name']
         })
-    scan_engines_json = json.dumps(list(EngineInstance.objects.all().values('id', 'name', 'engine__name', 'engine__id')))
+    scan_engines_json = json.dumps(list(EngineInstance.objects.filter(**filters).all().values('id', 'name', 'engine__name', 'engine__id')))
     teams_list = request.user.users_team.values('id', 'name').order_by('name')
 
     scan_policies_json = []
     for p in scan_policies:
-        scan_policies_json.append({
-            "id": p.id,
-            "engine": p.engine_id,
-            "name": p.name,
-            "scopes": list(p.scopes.values_list("id", flat=True)),
-        })
+        scan_policies_json.append(p.as_dict())
 
     form = None
     if request.method == 'GET':
@@ -692,7 +720,7 @@ def edit_scan_def_view(request, scan_def_id):
 @pro_group_required('ScansManager', 'ScansViewer')
 def detail_scan_def_view(request, scan_definition_id):
     """Details of a scan definition."""
-    scan_def = get_object_or_404(ScanDefinition.objects.for_user(request.user).prefetch_related('assets_list', 'scan_set'), id=scan_definition_id)
+    scan_def = get_object_or_404(ScanDefinition.objects.for_user(request.user), id=scan_definition_id)
     scan_list = scan_def.scan_set.order_by('-finished_at')
 
     paginator = Paginator(scan_list, 20)

@@ -2,13 +2,13 @@
 {% block content %}
 
 <ul class="breadcrumb">
-  <li><a href="/engines/list">engines</a></li>
-  <li><a href="/engines/policies/list">policies</a></li>
-  <li class="active">add new policy</li>
+  <li><a href="/engines/list">引擎</a></li>
+  <li><a href="/engines/policies/list">策略</a></li>
+  <li class="active">添加策略</li>
 </ul>
 <div class="container">
   <form action="/engines/policies/add" method="post" class="form-horizontal" enctype="multipart/form-data">
-    <legend>Add a new policy</legend>
+    <legend>添加新策略</legend>
       {% csrf_token %}
       {% for field in form %}
           {% if field.errors %}
@@ -37,7 +37,7 @@
         <div class="col-sm-2">
         </div>
         <div class="col-sm-4">
-          <button type="submit" class="btn btn-warning col-sm-12">Create a new policy</button>
+          <button type="submit" class="btn btn-warning col-sm-12">添加新策略</button>
         </div>
       </div>
   </form>

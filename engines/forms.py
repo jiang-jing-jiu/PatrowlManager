@@ -44,7 +44,7 @@ class EngineInstanceForm(forms.ModelForm):
                 'value': 'https://engine_ip:50xx/engines/<engine_name>/'}),
             'password': forms.PasswordInput(attrs={'class': 'form-control form-control-sm'}),
             'username': forms.TextInput(attrs={'class': 'form-control form-control-sm'}),
-            'name': forms.TextInput(attrs={'class': 'form-control form-control-sm'}),
+            'name': forms.TextInput(attrs={'class': 'form-control form-control-sm','placeholder':'请输入引擎名称...'}),
             'api_key': forms.TextInput(attrs={'class': 'form-control form-control-sm'}),
             'authentication_method': forms.Select(attrs={'class': 'form-control form-control-sm'})
         }

@@ -3,34 +3,34 @@
 {% block content %}
 
 <ul class="breadcrumb">
-  <li class="active"><a href="/settings/">settings</a></li>
+  <li class="active"><a href="/settings/">设置</a></li>
 </ul>
 
 <div id="menu_tabs" class="container-fluid">
   <ul class="nav nav-tabs" id="menu_tabs_ul">
-    <li class="active"><a data-toggle="tab"  href="#settings" >Global settings</a></li>
+    <li class="active"><a data-toggle="tab"  href="#settings" >本地设置</a></li>
     <!-- <li><a data-toggle="tab" href="#infos_updates">Infos & Updates</a></li> -->
     {% if PRO_EDITION is False %}
-    <li><a data-toggle="tab" href="#users">Users</a></li>
+    <li><a data-toggle="tab" href="#users">用户</a></li>
     {% endif %}
-    <li><a data-toggle="tab" href="#events">Events</a></li>
+    <li><a data-toggle="tab" href="#events">操作日志</a></li>
   </ul>
 
   <div class="tab-content">
     <div id="settings" class="tab-pane fade in active">
-      <h3>Settings</h3>
-      <p class="text-muted">Pro tip: double-click on settings value to edit it. Save it with Enter key.</p>
+      <h3>设置</h3>
+      <p class="text-muted">专业提示：双击设置值进行编辑，按下回车键保存</p>
       <br/>
       <div class="container">
         <div class="row">
           <div class="col-sm-3">
-            <strong>Key</strong>
+            <strong>键</strong>
           </div>
           <div class="col-sm-7">
-            <strong>Value</strong>
+            <strong>值</strong>
           </div>
           <div class="col-sm-1">
-            <strong>Actions</strong>
+            <strong>操作</strong>
           </div>
         </div>
         {% for setting in settings|sort_by:"key" %}
@@ -52,14 +52,14 @@
         <div class="row">
           <div class="col-sm-6">
             <button type="button" class="btn btn-warning btn-xs" data-toggle="modal" data-target="#modal-add-setting">
-              + Add new setting </button>
+              +  添加新设置</button>
             <!-- <span class="btn btn-xs btn-default">
               <i class="glyphicon glyphicon-plus"></i>
               <span>Import settings</span>
               <input id="fileupload" type="file" name="files[]" multiple/>
             </span> -->
             <a type="button" class="btn btn-default btn-xs" href="/settings/api/v1/export">
-              > Export settings </a>
+              > 导出设置 </a>
           </div>
         </div>
       </div>
@@ -70,30 +70,30 @@
       <h3>Infos and updates</h3>
     </div> -->
     <div id="users" class="tab-pane fade">
-      <h3>Users Management</h3>
+      <h3>用户管理</h3>
       {% include 'menu-users.html' with users=users %}
     </div>
     <div id="events" class="tab-pane fade">
-      <h3>Events Management</h3>
+      <h3>日志管理</h3>
       <!-- <table id="dt_events" class="display" cellspacing="0" width="100%">
         <thead>
           <tr>
-            <th scope="col">Id</th>
-            <th scope="col">Severity</th>
-            <th scope="col">Message</th>
-            <th scope="col">Type</th>
-            <th scope="col">Timestamp</th>
-            <th scope="col">Actions</th>
+            <th>Id</th>
+            <th>Severity</th>
+            <th>Message</th>
+            <th>Type</th>
+            <th>Timestamp</th>
+            <th>Actions</th>
           </tr>
         </thead>
         <tfoot>
            <tr>
-             <th scope="col">Id</th>
-             <th scope="col">Severity</th>
-             <th scope="col">Message</th>
-             <th scope="col">Type</th>
-             <th scope="col">Timestamp</th>
-             <th scope="col">Actions</th>
+             <th>Id</th>
+             <th>Severity</th>
+             <th>Message</th>
+             <th>Type</th>
+             <th>Timestamp</th>
+             <th>Actions</th>
            </tr>
        </tfoot>
       </table> -->
@@ -103,10 +103,10 @@
           <tr>
             <th data-field="cb"><input type="checkbox" onClick="toggle(this, 'event')" /></th>
             <th data-field="id">Id</th>
-            <th data-field="severity">Severity</th>
-            <th data-field="message">Message</th>
-            <th data-field="type">Type</th>
-            <th data-field="timestamp">Timestamp</th>
+            <th data-field="severity">严重程度</th>
+            <th data-field="message">信息</th>
+            <th data-field="type">类型</th>
+            <th data-field="timestamp">操作时间</th>
             <!-- <th data-field="actions">Actions</th> -->
           </tr>
         </thead>
@@ -185,9 +185,9 @@
         <div id="delete-setting">
           <!-- Content -->
         </div>
-        Confirm Deleting?
-        <button type="button" class="btn btn-xs btn-warning btn-delete-setting" data-dismiss="modal">Yes</button>
-        <button type="button" class="btn btn-xs btn-primary" data-dismiss="modal">No</button>
+        确定删除?
+        <button type="button" class="btn btn-xs btn-warning btn-delete-setting" data-dismiss="modal">是</button>
+        <button type="button" class="btn btn-xs btn-primary" data-dismiss="modal">否</button>
       </div>
     </div>
   </div>
@@ -203,7 +203,7 @@
           <span aria-hidden="true">&times;</span>
           <span class="sr-only">Close</span>
         </button>
-        <h4 class="modal-title" id="myModalLabel">Add new setting</h4>
+        <h4 class="modal-title" id="myModalLabel">添加新设置</h4>
       </div>
 
       <!-- Modal Body -->
@@ -211,14 +211,14 @@
         <div id="add-setting">
           <!-- <form action="#" method="POST"> -->
             <div class="form-group">
-              <label><b>Key</b></label>
-              <input type="text" placeholder="Enter key" id="add_setting_key" required class="form-control form-control-sm">
+              <label><b>键</b></label>
+              <input type="text" placeholder="输入键" id="add_setting_key" required class="form-control form-control-sm">
             </div>
             <div class="form-group">
-              <label><b>Value</b></label>
-              <input type="text" placeholder="Enter setting value" id="add_setting_value" required class="form-control form-control-sm">
+              <label><b>值</b></label>
+              <input type="text" placeholder="输入值" id="add_setting_value" required class="form-control form-control-sm">
             </div>
-            <button type="submit" class="btn btn-primary btn-add-setting" data-dismiss="modal">Submit</button>
+            <button type="submit" class="btn btn-primary btn-add-setting" data-dismiss="modal">提交</button>
           <!-- </form> -->
         </div>
       </div>
@@ -327,7 +327,7 @@
     id = e.relatedTarget.getAttribute('setting-id');
     key = e.relatedTarget.getAttribute('setting-key');
     $("div#delete-setting").attr('setting-id', id);
-    $("div#delete-setting").html("Setting: <b>"+encodeURIComponent(key)+"</b><br/><br/>");
+    $("div#delete-setting").html("设置: <b>"+key+"</b><br/><br/>");
   });
   $("button.btn-delete-setting").on('click', function (e) {
     id = $("div#delete-setting").attr('setting-id');
@@ -365,7 +365,7 @@
     setting_id=e.delegateTarget.getAttribute("setting-id");
     setting_value=$('div#setting_value_'+setting_id+' i').text();
     $('div#setting_value_'+setting_id).empty();
-    $('div#setting_value_'+setting_id).append("<input type='text' value='"+encodeURIComponent(setting_value)+"' name='setting_value' class='form-control form-control-sm'/>");
+    $('div#setting_value_'+setting_id).append("<input type='text' value='"+setting_value+"' name='setting_value' class='form-control form-control-sm'/>");
 
     //On Enter key press, update the field
     $('input[name="setting_value"]').keyup(function(e){
@@ -388,7 +388,7 @@
          success: function(){
            location.reload();
            $('div#setting_value_'+setting_id).empty();
-           $('div#setting_value_'+setting_id).append("<i>"+encodeURIComponent(e.target.value)+"</i>");
+           $('div#setting_value_'+setting_id).append("<i>"+e.target.value+"</i>");
          }
        });
     });
@@ -396,7 +396,7 @@
        setting_id = e.target.parentElement.getAttribute("setting-id");
        setting_value = e.target.getAttribute("value");
        $('div#setting_value_'+setting_id).empty();
-       $('div#setting_value_'+setting_id).append("<i>"+encodeURIComponent(setting_value)+"</i>");
+       $('div#setting_value_'+setting_id).append("<i>"+setting_value+"</i>");
     });
   };
 

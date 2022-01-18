@@ -2,13 +2,13 @@
 {% block content %}
 
 <ul class="breadcrumb">
-  <li><a href="/engines/list">engines</a></li>
-  <li class="active">edit engine instance</li>
+  <li><a href="/engines/list">引擎</a></li>
+  <li class="active">编辑引擎</li>
 </ul>
 
 <div class="container">
   <form action="/engines/edit/{{ engine_id }}" method="post" class="form-horizontal">
-    <legend>Edit an engine instance</legend>
+    <legend>编辑引擎实例</legend>
       {% csrf_token %}
       {% for field in form %}
           {% if field.errors %}
@@ -37,14 +37,14 @@
         <div class="col-sm-2">
         </div>
         <div class="col-sm-4">
-          <button type="submit" class="btn btn-warning col-sm-12">Update engine</button>
+          <button type="submit" class="btn btn-warning col-sm-12">更新引擎</button>
         </div>
       </div>
   </form>
   {% if messages %}
   <ul class="messages">
       {% for message in messages %}
-      <li {% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message }}</li>
+      <li{% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message }}</li>
       {% endfor %}
   </ul>
   {% endif %}

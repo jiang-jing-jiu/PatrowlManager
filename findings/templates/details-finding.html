@@ -17,7 +17,7 @@ hr {
 </style>
 
 <ul class="breadcrumb">
-  <li><a href="{% url 'list_findings_view' %}">findings</a></li>
+  <li><a href="{% url 'list_findings_view' %}">扫描结果</a></li>
   <li class="active"> {{ finding.asset_name }}: {{ finding.title }}</li>
 </ul>
 <div class="container-fluid">
@@ -26,9 +26,9 @@ hr {
 
       <div id="menu_tabs" class="container-fluid">
         <ul class="nav nav-tabs" id="menu_tabs_ul">
-          <li class="active menu_summary"><a data-toggle="tab"  href="#summary_div">Summary</a></li>
-          <li class="menu_comments"><a data-toggle="tab" href="#comments_div">Comments</a></li>
-          <li class="menu_tracking"><a data-toggle="tab" href="#tracking_div">Tracking</a></li>
+          <li class="active menu_summary"><a data-toggle="tab"  href="#summary_div">总结</a></li>
+          <li class="menu_comments"><a data-toggle="tab" href="#comments_div">评论</a></li>
+          <li class="menu_tracking"><a data-toggle="tab" href="#tracking_div">进展</a></li>
         </ul>
         <div class="tab-content">
 
@@ -38,22 +38,22 @@ hr {
             <div class="row">
               <b>
                 {% if finding.severity == 'critical' %}
-                <span class="label label-critical">{{ finding.severity }}</span>
+                <span class="label label-critical">严重的</span>
                 {% elif finding.severity == 'high' %}
-                <span class="label label-high">{{ finding.severity }}</span>
+                <span class="label label-high">高风险的</span>
                 {% elif finding.severity == 'medium' or finding.severity == 'moderate' %}
-                <span class="label label-medium">{{ finding.severity }}</span>
+                <span class="label label-medium">中等的</span>
                 {% elif finding.severity == 'low' %}
-                <span class="label label-low">{{ finding.severity }}</span>
+                <span class="label label-low">低风险的</span>
                 {% else %}
-                <span class="label label-info">{{ finding.severity }}</span>
+                <span class="label label-info">提示信息</span>
                 {% endif %}
                 {{ finding.title }}
               </b>
             </div>
             <div class="row">
               <p>
-                <br/><b>Description</b><br/>
+                <br/><b>详细信息</b><br/>
                 {% if finding.scan.engine_type.name == "CORTEX" %}
                 <pre>{{ finding.description|linebreaksbr }}</pre>
                 {% else %}
@@ -62,12 +62,12 @@ hr {
               </p>
             </div>
             <div class="row">
-              <b>Solution</b><br/>
+              <b>解决方案</b><br/>
               {{ finding.solution|linebreaks }}
             </div>
             <div class="row">
               <p>
-                <b>See also</b><br/>
+                <b>另请参阅</b><br/>
                 {% if not finding.links %}
                   No links.
                 {% else %}
@@ -79,7 +79,7 @@ hr {
             </div>
             <div class="row">
               <p>
-                <b>Hash</b><br/>
+                <b>Hash码</b><br/>
                 {{ finding.hash }}
               </p>
             </div>
@@ -119,16 +119,14 @@ hr {
     </div>
 
     <div class="col-sm-4">
-      <b>Actions</b>
+      <b>操作{{ PRO_EDITION }}-</b>
       <hr class="my-1">
     {% if PRO_EDITION %}
         {% if request.user.is_superuser or request.user|has_role:"MANAGER" or request.user|has_role:"ANALYST" %}
-        {% if raw == False %}
         <div class="generate-alerts">
           <button class="btn btn-danger btn-xs btn-generate-alerts" style="width: 100%;">Generate alerts</button>
           <i class="alerts_summary"></i>
         </div>
-        {% endif %}
         <div class="change-finding-status">
           {% if raw == True %}
           <a href="/findings/edit/{{ finding.id }}?raw=true"><button class="btn btn-default btn-xs btn-change-finding-infos" style="width: 100%;">Update info</button></a>
@@ -138,58 +136,56 @@ hr {
         </div>
         {% endif %}
       {% else %}
-      {% if raw == False %}
       <div class="generate-alerts">
-        <button class="btn btn-danger btn-xs btn-generate-alerts" style="width: 100%;">Generate alerts</button>
+        <button class="btn btn-danger btn-xs btn-generate-alerts" style="width: 100%;">生成警报</button>
         <i class="alerts_summary"></i>
       </div>
-      {% endif %}
       <div class="change-finding-status">
         {% if raw == True %}
-        <a href="/findings/edit/{{ finding.id }}?raw=true"><button class="btn btn-default btn-xs btn-change-finding-infos" style="width: 100%;">Update info</button></a>
+        <a href="/findings/edit/{{ finding.id }}?raw=true"><button class="btn btn-default btn-xs btn-change-finding-infos" style="width: 100%;">更新信息</button></a>
         {% else %}
-        <a href="/findings/edit/{{ finding.id }}"><button class="btn btn-default btn-xs btn-change-finding-infos" style="width: 100%;">Update info</button></a>
+        <a href="/findings/edit/{{ finding.id }}"><button class="btn btn-default btn-xs btn-change-finding-infos" style="width: 100%;">更新信息</button></a>
         {% endif %}
       </div>
       {% endif %}
       <div class="export-finding btn-group" style="width: 100%;">
-        <a href="#" class="btn btn-xs btn-primary dropdown-toggle" data-toggle="dropdown" style="width: 100%;">Export <span class="caret pull"></span></a>
+        <a href="#" class="btn btn-xs btn-primary dropdown-toggle" data-toggle="dropdown" style="width: 100%;">导出<span class="caret pull"></span></a>
         <ul class="dropdown-menu">
-          <li><a href="#" export-format="html">HTML</a></li>
+          <li><a href="#" export-format="html">网页格式</a></li>
           <!-- <li><a href="#" export-format="pdf">PDF (Todo)</a></li> -->
-          <li><a href="#" export-format="json">JSON</a></li>
-          <li><a href="#" export-format="stix">STIX 2</a></li>
-          <li><a href="#" export-format="csv">CSV</a></li>
+          <li><a href="#" export-format="json">JSON格式</a></li>
+          <li><a href="#" export-format="stix">STIX 2格式</a></li>
+          <li><a href="#" export-format="csv">CSV格式</a></li>
         </ul>
       </div>
       <br/>
       <br/>
 
-      <b>Finding infos</b>
+      <b>查找信息</b>
       <hr class="my-1">
       <dl class="dl-horizontal">
-        <dt>ID:</dt><dd>{{ finding.id }}</dd>
-        <dt>Severity:</dt><dd>
+        <dt>编号:</dt><dd>{{ finding.id }}</dd>
+        <dt>严重程度:</dt><dd>
           {% if finding.severity == 'critical' %}
-          <td><span class="label label-critical">{{ finding.severity }}</span></td>
+          <td><span class="label label-critical">严重的</span></td>
           {% elif finding.severity == 'high' %}
-          <td><span class="label label-high">{{ finding.severity }}</span></td>
+          <td><span class="label label-high">高风险的</span></td>
           {% elif finding.severity == 'medium' or finding.severity == 'moderate' %}
-          <td><span class="label label-medium">{{ finding.severity }}</span></td>
+          <td><span class="label label-medium">中等的</span></td>
           {% elif finding.severity == 'low' %}
-          <td><span class="label label-low">{{ finding.severity }}</span></td>
+          <td><span class="label label-low">低风险的</span></td>
           {% else %}
-          <td><span class="label label-info">{{ finding.severity }}</span></td>
+          <td><span class="label label-info">提示信息</span></td>
           {% endif %}
         </dd>
-        <dt>Status:</dt><dd>
+        <dt>状态:</dt><dd>
           {% if finding.status == 'new' %}
           <span class="text-danger">{{ finding.status }}</span>
           {% else %}
             {{ finding.status }}
           {% endif %}
         </dd>
-        <dt>Asset:</dt><dd>
+        <dt>资产:</dt><dd>
           <a href="/assets/details/{{finding.asset.id}}">
           {% if finding.asset|length > 64 %}
             {{ finding.asset|truncatechars:64 }}
@@ -198,16 +194,11 @@ hr {
           {% endif %}
         </a>
         </dd>
-        <dt>Asset tags:</dt><dd>
-          {% for tag in finding.asset.categories.all %}
-          <span class="label label-primary">{{tag.value|lower}}</span>
-          {% endfor %}
-        </dd>
-        <dt>From engine:</dt><dd>{{ finding.scan.engine.name }} ({{ finding.engine_type }})</dd>
-        <dt>From scan:</dt><dd><a href="/scans/details/{{finding.scan.id}}">{{ finding.scan.title }}</a></dd>
-        <dt>From policy:</dt><dd><a href="/engines/policies/edit/{{finding.scan.engine_policy.id}}">{{ finding.scan.engine_policy.name }}</a></dd>
-        <dt>Type:</dt><dd>{{ finding.type }}</dd>
-        <dt>Tags:</dt>
+        <dt>扫描引擎:</dt><dd>{{ finding.scan.engine.name }} ({{ finding.engine_type }})</dd>
+        <dt>扫描任务:</dt><dd><a href="/scans/details/{{finding.scan.id}}">{{ finding.scan.title }}</a></dd>
+        <dt>扫描策略:</dt><dd><a href="/engines/policies/edit/{{finding.scan.engine_policy.id}}">{{ finding.scan.engine_policy.name }}</a></dd>
+        <dt>类型:</dt><dd>{{ finding.type }}</dd>
+        <dt>标签:</dt>
         <dd>
           {% if not finding.tags %}
             No Tags.
@@ -217,27 +208,27 @@ hr {
             {% endfor %}
           {% endif %}
         </dd>
-        <dt>Found at:</dt><dd>{{ finding.created_at|date:"Y/m/d\-H:i:s" }}</dd>
+        <dt>发现时间:</dt><dd>{{ finding.created_at|date:"Y/m/d\-H:i:s" }}</dd>
       </dl>
 
       {% if finding.risk_info %}
-      <b>Risk infos</b>
+      <b>风险信息</b>
       <hr class="my-1">
       <dl class="dl-horizontal">
         {% if "cvss3_base_score" in finding.risk_info.keys %}
-        <dt>CVSSv3 Base Score:</dt><dd>{{ finding.risk_info.cvss3_base_score }}</dd>
+        <dt>CVSSv3 基本分数:</dt><dd>{{ finding.risk_info.cvss3_base_score }}</dd>
         {% endif %}
         {% if "cvss3_vector" in finding.risk_info.keys %}
         <dt>CVSSv3 Vector:</dt><dd>{{ finding.risk_info.cvss3_vector }}</dd>
         {% endif %}
         {% if "cvss_base_score" in finding.risk_info.keys %}
-        <dt>CVSSv2 Base Score:</dt><dd>{{ finding.risk_info.cvss_base_score }}</dd>
+        <dt>CVSSv2 基本分数:</dt><dd>{{ finding.risk_info.cvss_base_score }}</dd>
         {% endif %}
         {% if "cvss_vector" in finding.risk_info.keys %}
-        <dt>CVSSv2 Vector:</dt><dd>{{ finding.risk_info.cvss_vector }}</dd>
+        <dt>CVSSv2 矢量(Vector):</dt><dd>{{ finding.risk_info.cvss_vector }}</dd>
         {% endif %}
         {% if "vuln_publication_date" in finding.risk_info.keys %}
-        <dt>Publication date:</dt><dd>{{ finding.risk_info.vuln_publication_date }}</dd>
+        <dt>公布日期:</dt><dd>{{ finding.risk_info.vuln_publication_date }}</dd>
         {% endif %}
 
         {% with "cvss3_base_score cvss3_vector cvss_base_score cvss_vector vuln_publication_date" as list %}
@@ -306,7 +297,7 @@ hr {
   {% if messages %}
   <ul class="messages">
       {% for message in messages %}
-      <li {% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message }}</li>
+      <li{% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message }}</li>
       {% endfor %}
   </ul>
   {% endif %}
@@ -323,8 +314,15 @@ hr {
 
   // Generate alerts
   $('button.btn-generate-alerts').on('click', function(e){
+    finding_id = "{{finding.id}}";
+    gen_alert_url = ""
+    if (qs('raw') == "true") {
+      gen_alert_url = "/findings/api/v1/gen_alerts/"+finding_id+"?raw=true";
+    } else {
+      gen_alert_url = "/findings/api/v1/gen_alerts/"+finding_id;
+    }
     var request = $.ajax({
-      url: "/findings/api/v1/gen_alerts/{{finding.id}}?raw=true",
+      url: gen_alert_url,
       method: "GET",
       success: function(data){
         $('i.alerts_summary')[0].textContent = data["nb_matches"]+" alert(s) generated";

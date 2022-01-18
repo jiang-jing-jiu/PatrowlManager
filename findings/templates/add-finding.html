@@ -2,13 +2,13 @@
 {% block content %}
 
 <ul class="breadcrumb">
-  <li><a href="/findings/list">findings</a></li>
-  <li class="active">add new</li>
+  <li><a href="/findings/list">扫描结果</a></li>
+  <li class="active">新增</li>
 </ul>
 
 <div class="container">
   <form action="/findings/add" method="post" class="form-horizontal">
-    <legend>Add a new finding</legend>
+    <legend>添加新的扫描结果</legend>
       {% csrf_token %}
       {% for field in form %}
           {% if field.errors %}
@@ -36,8 +36,8 @@
       <div class="form-group submit-div">
         <div class="col-sm-2"></div>
         <div class="col-sm-4">
-          <input type="submit" class="btn btn-primary" value="Add Finding">
-          <a href="/findings/list"><button class="btn btn-primary">Cancel</button></a>
+          <input type="submit" class="btn btn-primary" value="添加查找">
+          <a href="/findings/list"><button class="btn btn-primary">取消</button></a>
         </div>
       </div>
   </form>

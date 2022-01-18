@@ -9,7 +9,7 @@
 
 <div class="container">
   <form action="/assets/edit/{{ asset.id }}" method="post" class="form-horizontal">
-    <legend>Edit an asset</legend>
+    <legend>编辑资产</legend>
       {% csrf_token %}
       {% for field in form %}
           {% if field.errors %}
@@ -38,18 +38,18 @@
         <div class="col-sm-2">
         </div>
         <div class="col-sm-4">
-          <button type="submit" class="btn btn-warning col-sm-12 form-control-sm">Modify the asset</button>
+          <button type="submit" class="btn btn-warning col-sm-12 form-control-sm">编辑资产</button>
           <br/>
           <br/>
           <button class="btn btn-danger col-sm-12 form-control-sm" type="button" data-toggle="modal" data-target="#modal-delete-asset"
-             asset-id="{{ asset.id }}" asset-value="{{ asset.value }}">Delete</button>
+             asset-id="{{ asset.id }}" asset-value="{{ asset.value }}">删除</button>
         </div>
       </div>
   </form>
   {% if messages %}
   <ul class="messages">
       {% for message in messages %}
-      <li {% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message }}</li>
+      <li{% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message }}</li>
       {% endfor %}
   </ul>
   {% endif %}
@@ -65,7 +65,7 @@
           <span aria-hidden="true">&times;</span>
           <span class="sr-only">Close</span>
         </button>
-        <h4 class="modal-title" id="myModalLabel">Delete Asset</h4>
+        <h4 class="modal-title" id="myModalLabel">删除资产</h4>
       </div>
 
       <!-- Modal Body -->
@@ -73,9 +73,9 @@
         <div id="delete-asset">
           <!-- Content -->
         </div>
-        Confirm Deleting?
-        <button type="button" class="btn btn-xs btn-danger btn-delete-asset" data-dismiss="modal">Yes</button>
-        <button type="button" class="btn btn-xs btn-primary" data-dismiss="modal">No</button>
+        确认删除?
+        <button type="button" class="btn btn-xs btn-danger btn-delete-asset" data-dismiss="modal">是</button>
+        <button type="button" class="btn btn-xs btn-primary" data-dismiss="modal">否</button>
       </div>
     </div>
   </div>
@@ -88,7 +88,7 @@
       id = e.relatedTarget.getAttribute('asset-id');
       asset_value = e.relatedTarget.getAttribute('asset-value');
       $("div#delete-asset").attr('asset-id', id);
-      $("div#delete-asset").html("Asset: <b>"+asset_value+"</b><br/><br/>");
+      $("div#delete-asset").html("资产: <b>"+asset_value+"</b><br/><br/>");
     });
     $("button.btn-delete-asset").on('click', function (e) {
       id = $("div#delete-asset").attr('asset-id');
@@ -103,5 +103,7 @@
     });
   });
 </script>
-
+    <script>
+   $('#id_teams').parent().parent().css('display','none')
+    </script>
 {% endblock %}

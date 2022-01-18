@@ -7,7 +7,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>PatrOwl</title>
+  <title>扫描工具管理平台</title>
 
   <!-- Favicon -->
   <link rel="shortcut icon" type="image/png" href="{% static 'favicon.ico' %}"/>
@@ -43,6 +43,8 @@
   <!-- DateTime picker -->
   <link href="/static/css/datetimepicker.css" type="text/css" media="all" rel="stylesheet" />
   <script type="text/javascript" src="/static/js/bootstrap-datetimepicker.js"></script>
+{# bootstrap-datetimepicker.zh-CN.js #}
+ <script type="text/javascript" src="/static/js/bootstrap-datetimepicker.zh-CN.js"></script>
 
   <!-- Typeahead jQuery plugin -->
   <script src="{% static 'js/typeahead/typeahead.bundle.min.js' %}"></script>
@@ -76,25 +78,6 @@
         window.history.back();
     }
 
-    function encodeURIComponent(str){
-      return String(str).replace(/[^\w. ]/gi, function(c){
-         return '\\u'+('0000'+c.charCodeAt(0).toString(16)).slice(-4);
-      });
-
-    }
-
-    function escapeHtml(text) {
-      var map = {
-        '&': '&amp;',
-        '<': '&lt;',
-        '>': '&gt;',
-        '"': '&quot;',
-        "'": '&#039;'
-      };
-
-      return text.replace(/[&<>"']/g, function(m) { return map[m]; });
-    }
-
     $(function(){
       $(".clickable-row").click(function() {
         var sel = getSelection().toString();
@@ -110,12 +93,7 @@
       {% if user.is_authenticated %}
       refresh_engines_status();
       if({{ PATROWL_REFRESH_ENGINE }}>0){
-        setInterval(
-          function() {
-            refresh_engines_status();
-          },(
-            {{ PATROWL_REFRESH_ENGINE }} > 5000)?{{ PATROWL_REFRESH_ENGINE }}:5000
-        );
+        setInterval(function() {refresh_engines_status();},({{ PATROWL_REFRESH_ENGINE }}>5000)?{{ PATROWL_REFRESH_ENGINE }}:5000);
       }
       {% endif %}
 
@@ -145,7 +123,7 @@
           engine = engines_json[engine_id];
           enabled = ""
           if (engine["enabled"] == true) {enabled = "Enabled";} else {enabled="Disabled"}
-          title = escapeHtml(engine["name"]) + " ("+enabled+"/"+engine["status"]+")";
+          title = engine["name"] + " ("+enabled+"/"+engine["status"]+")";
           status_color = "default";
           if (engine["enabled"] && engine["status"] == "READY" || engine["status"] == "WORKING") {
             status_color = "success";
@@ -296,7 +274,7 @@
 </head>
 
 <body>
-  <nav class="navbar navbar-default navbar-fixed-top">
+  <nav class="navbar navbar-default navbar-fixed-top" style="background-color: rgba(9, 20, 60, 1);">
     <div class="container-fluid">
       <div class="navbar-header">
         <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#bs-example-navbar-collapse-all">
@@ -305,7 +283,7 @@
           <span class="icon-bar"></span>
           <span class="icon-bar"></span>
         </button>
-        <a class="navbar-brand" href="/dashboard">PatrOwl Manager</a>
+        <a class="navbar-brand" href="/dashboard">扫描工具管理平台</a>
       </div>
       <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-all">
         <ul class="nav navbar-nav">
@@ -313,39 +291,39 @@
           <!-- Assets Management -->
           <li class="dropdown">
             <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="true">
-              <span class="glyphicon glyphicon-cloud"></span> Assets<span class="caret"></span>
+              <span class="glyphicon glyphicon-cloud"></span> 资产<span class="caret"></span>
             </a>
             <ul class="dropdown-menu" role="menu">
-              <li><a href="{% url 'list_assets_view' %}">Assets</a></li>
+              <li><a href="{% url 'list_assets_view' %}">资产</a></li>
               {% if PRO_EDITION %}
                 {% if request.user.is_superuser or request.user|has_role:"MANAGER" or request.user|has_role:"ANALYST" %}
-                <li><a href="{% url 'add_asset_view' %}">+ Add new asset</a></li>
-                <li><a href="{% url 'bulkadd_asset_view' %}">+ Add new assets in bulk (CSV file)</a></li>
+                <li><a href="{% url 'add_asset_view' %}">+ 添加新资产</a></li>
+                <li><a href="{% url 'bulkadd_asset_view' %}">+ 批量添加新资产（CSV文件）</a></li>
                 {% endif %}
               {% else %}
-              <li><a href="{% url 'add_asset_view' %}">+ Add new asset</a></li>
-              <li><a href="{% url 'bulkadd_asset_view' %}">+ Add new assets in bulk (CSV file)</a></li>
+              <li><a href="{% url 'add_asset_view' %}">+ 添加新资产</a></li>
+              <li><a href="{% url 'bulkadd_asset_view' %}">+ 批量添加新资产（CSV文件）</a></li>
               {% endif %}
 
               <li role="separator" class="divider"></li>
-              <li><a href="{% url 'list_assets_view' %}?target=asset_group">Asset groups</a></li>
+              <li><a href="{% url 'list_assets_view' %}?target=asset_group">资产组</a></li>
 
               {% if PRO_EDITION %}
                 {% if request.user.is_superuser or request.user|has_role:"MANAGER" or request.user|has_role:"ANALYST" %}
-                  <li><a href="{% url 'add_asset_group_view' %}">+ Add new group of assets</a></li>
+                  <li><a href="{% url 'add_asset_group_view' %}">+ 添加新资产组</a></li>
                 {% endif %}
               {% else %}
-                <li><a href="{% url 'add_asset_group_view' %}">+ Add new group of assets</a></li>
+                <li><a href="{% url 'add_asset_group_view' %}">+ 添加新资产组</a></li>
               {% endif %}
               <li role="separator" class="divider"></li>
-              <li><a href="/assets/owners/list">Asset owners</a></li>
+              <li><a href="/assets/owners/list">资产所有者</a></li>
 
               {% if PRO_EDITION %}
                 {% if request.user.is_superuser or request.user|has_role:"MANAGER" or request.user|has_role:"ANALYST" %}
-                  <li><a href="/assets/owners/add">+ Add new asset owner</a></li>
+                  <li><a href="/assets/owners/add">+ 添加新资产所有者</a></li>
                 {% endif %}
               {% else %}
-                <li><a href="/assets/owners/add">+ Add new asset owner</a></li>
+                <li><a href="/assets/owners/add">+ 添加新资产所有者</a></li>
               {% endif %}
               <!-- <li role="separator" class="divider"></li>
               <li><a href="/admin/assets/assetcategory/">List categories (Admin only)</a></li>
@@ -356,76 +334,78 @@
           <!-- Findings Management -->
           <li class="dropdown">
             <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="true">
-              <span class="glyphicon glyphicon-map-marker"></span> Findings<span class="caret"></span>
+              <span class="glyphicon glyphicon-map-marker"></span> 扫描结果<span class="caret"></span>
             </a>
             <ul class="dropdown-menu" role="menu">
-              <li><a href="/findings/list">All findings</a></li>
-              <li><a href="/findings/list?_status=new">New findings</a></li>
-              <li><a href="/findings/list?_status=ack">Ack. findings</a></li>
+              <li><a href="/findings/list">所有扫描结果</a></li>
+              <li><a href="/findings/list?_status=new">新扫描结果</a></li>
+              <li><a href="/findings/list?_status=ack">确认扫描结果</a></li>
               {% if PRO_EDITION %}
                 {% if request.user.is_superuser or request.user|has_role:"MANAGER" or request.user|has_role:"ANALYST" %}
                 <li role="separator" class="divider"></li>
-                <li><a href="/findings/import">Manual import</a></li>
-                <li><a href="/findings/add">+ Add finding</a></li>
+                <li><a href="/findings/import">手工导入</a></li>
+                <li><a href="/findings/add">+ 添加查找</a></li>
                 {% endif %}
               {% else %}
               <li role="separator" class="divider"></li>
-              <li><a href="/findings/import">Manual import</a></li>
-              <li><a href="/findings/add">+ Add finding</a></li>
+              <li><a href="/findings/import">手工导入</a></li>
+              <li><a href="/findings/add">+ 添加查找</a></li>
               {% endif %}
 
             </ul>
           </li>
 
           <!-- Scans Management -->
+          {% if request.user.is_superuser %}
           <li class="dropdown">
             <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="true">
-              <span class="glyphicon glyphicon-search"></span> Scans<span class="caret"></span>
+              <span class="glyphicon glyphicon-search"></span> 扫描<span class="caret"></span>
             </a>
             <ul class="dropdown-menu" role="menu">
-              <li><a href="/scans/list">Scans performed</a></li>
+              <li><a href="/scans/list">执行的扫描</a></li>
               <li role="separator" class="divider"></li>
-              <li><a href="/scans/defs/list">Scans definitions</a></li>
+              <li><a href="/scans/defs/list">扫描任务</a></li>
               {% if PRO_EDITION %}
                 {% if request.user.is_superuser or request.user|has_role:"MANAGER" or request.user|has_role:"ANALYST" %}
-                <li><a href="/scans/defs/add">+ Add new scan</a></li>
+                <li><a href="/scans/defs/add">+ 添加新扫描</a></li>
                 {% endif %}
               {% else %}
-              <li><a href="/scans/defs/add">+ Add new scan</a></li>
+              <li><a href="/scans/defs/add">+ 添加新扫描</a></li>
               {% endif %}
             </ul>
           </li>
-
+        {% endif %}
           <!-- Engines Management -->
+          {% if request.user.is_superuser %}
           <li class="dropdown">
             <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="true">
-              <span class="glyphicon glyphicon-screenshot"></span> Engines<span class="caret"></span>
+              <span class="glyphicon glyphicon-screenshot"></span> 引擎<span class="caret"></span>
             </a>
             <ul class="dropdown-menu">
               <li class="dropdown-submenu">
-                <a href="/engines/list">Scan Engines</a>
+                <a href="/engines/list">扫描引擎</a>
                 {% if PRO_EDITION %}
                   {% if request.user.is_superuser or request.user|has_role:"MANAGER" %}
-                  <li><a href="/engines/add">+ Add scan engine instance</a></li>
+                  <li><a href="/engines/add">+ 添加扫描引擎实例</a></li>
                   {% endif %}
 
                 {% else %}
-                <li><a href="/engines/add">+ Add scan engine instance</a></li>
+                <li><a href="/engines/add">+ 添加扫描引擎实例</a></li>
                 {% endif %}
 
               </li>
               <li role="separator" class="divider"></li>
               <li class="dropdown-submenu">
-                <a href="/engines/policies/list">Scan Engines Policies</a>
+                <a href="/engines/policies/list">扫描引擎策略</a>
                 {% if PRO_EDITION %}
                   {% if request.user.is_superuser or request.user|has_role:"MANAGER" %}
-                  <li><a href="/engines/policies/add">+ Add policy</a></li>
-                  <li><a href="/engines/policies/import">* Import policies</a></li>
+                  <li><a href="/engines/policies/add">+ 添加策略</a></li>
+                  <li><a href="/engines/policies/import">* 导入策略</a></li>
                   {% endif %}
 
                 {% else %}
-                <li><a href="/engines/policies/add">+ Add policy</a></li>
-                <li><a href="/engines/policies/import">* Import policies</a></li>
+                <li><a href="/engines/policies/add">+ 添加策略</a></li>
+                <li><a href="/engines/policies/import">* 导入策略</a></li>
                 {% endif %}
 
               </li>
@@ -434,46 +414,46 @@
                 {% if request.user.is_superuser or request.user|has_role:"MANAGER" %}
                 <li role="separator" class="divider"></li>
                 <li class="dropdown-submenu">
-                  <a href="/engines/types/list">Scan Engine Types</a>
-                  <li><a href="/engines/types/add">+ Add engine type</a></li>
+                  <a href="/engines/types/list"><strong>扫描引擎类型</strong></a>
+                  <li><a href="/engines/types/add">+ 添加引擎类型</a></li>
                 </li>
                 {% endif %}
 
               {% else %}
               <li role="separator" class="divider"></li>
               <li class="dropdown-submenu">
-              <a href="/engines/types/list">Scan Engine Types</a>
-              <li><a href="/engines/types/add">+ Add engine type</a></li>
+              <a href="/engines/types/list"><strong>扫描引擎类型</strong></a>
+              <li><a href="/engines/types/add">+ 添加引擎类型</a></li>
               </li>
               {% endif %}
 
             </ul>
           </li>
-
+{% endif %}
           <!-- Alerts -->
           <li class="dropdown">
             <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="true">
-              <span class="glyphicon glyphicon-bell"></span> Alerts<span class="caret"></span>
+              <span class="glyphicon glyphicon-bell"></span> 警报<span class="caret"></span>
             </a>
             <ul class="dropdown-menu" role="menu">
-              <li><a href="/events/alerts/list">List alerts</a></li>
+              <li><a href="/events/alerts/list">列出警报</a></li>
             </ul>
           </li>
 
           <!-- Settings -->
           <li class="dropdown">
             <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="true">
-              <span class="glyphicon glyphicon-flash"></span> Rules<span class="caret"></span>
+              <span class="glyphicon glyphicon-flash"></span> 规则<span class="caret"></span>
             </a>
             <ul class="dropdown-menu" role="menu">
-              <li><a href="/rules/list">List rules</a></li>
+              <li><a href="/rules/list">列出规则</a></li>
             </ul>
           </li>
         </ul>
 
         <form class="navbar-form navbar-left" role="search" method="get" accept-charset="utf-8" action="/search" style="padding-top: 4px;">
           <div class="input-group">
-            <input type="text" class="form-control input-sm" placeholder="Search" name="srch-term" id="srch-term">
+            <input type="text" class="form-control input-sm" placeholder="搜索" name="srch-term" id="srch-term">
             <div class="input-group-btn">
               <button class="btn btn-default btn-search btn-sm" type="submit"><i class="glyphicon glyphicon-search"></i></button>
             </div>
@@ -491,56 +471,67 @@
               <span class="caret"></span>
             </a>
             <ul class="dropdown-menu" role="menu">
-              <li><a href="/dashboard"><span class="glyphicon glyphicon-home"></span> Homepage</a></li>
+              <li><a href="/dashboard"><span class="glyphicon glyphicon-home"></span>数据面板</a></li>
               {% if PRO_EDITION %}
                 {% if request.user.is_superuser or request.user|has_role:"MANAGER" %}
-                <li><a href="/settings/"><span class="glyphicon glyphicon-wrench"></span> Settings</a></li>
+                <!--<li><a href="/settings/"><span class="glyphicon glyphicon-wrench"></span> 设置</a></li>-->
                 {% else %}
                 <!-- <li><a href="#"><span class="glyphicon glyphicon-wrench"></span> Settings (Admin or Manager only)</a></li> -->
                 <!-- <li><a href="#"><span class="glyphicon glyphicon-wrench"></span> Settings (SuperAdmin only)</a></li> -->
                 {% endif %}
               {% else %}
-              <li><a href="/settings/"><span class="glyphicon glyphicon-wrench"></span> Settings</a></li>
+              <!--<li><a href="/settings/"><span class="glyphicon glyphicon-wrench"></span> 设置</a></li>-->
               {% endif %}
-              <li><a href="/settings/support"><span class="glyphicon glyphicon-education text-warning"></span> Support</a></li>
-
-              <li class="divider"></li>
+<!--              <li><a href="/settings/support"><span class="glyphicon glyphicon-education text-warning"></span> Support</a></li>-->
+                
+                {% if request.user.is_superuser %}
+               <li><a href="/settings/"><span class="glyphicon glyphicon-wrench"></span> 设置</a></li>
+              {% endif %}
+       
+              <!--<li class="divider"></li>-->
               {% if PRO_EDITION %}
+              <li><a href="/admin/password_change/"><span class="glyphicon glyphicon-lock"></span>修改登录密码</a></li>
                 <!-- <li><a href="/users/pro/list"><span class="glyphicon glyphicon-th-list"></span> Users</a></li> -->
                 {% if request.user.is_superuser or request.user|is_team_admin == True %}
-                <li><a href="/users/list"><span class="glyphicon glyphicon-th-list"></span> Users</a></li>
+                <!--<li><a href="/users/pro/list"><span class="glyphicon glyphicon-th-list"></span> Users</a></li>-->
                 {% else %}
-                <li><a href="#"><span class="glyphicon glyphicon-th-list"></span> Users (Admin only)</a></li>
+                <!--<li><a href="#"><span class="glyphicon glyphicon-th-list"></span> Users (Admin only)</a></li>-->
                 {% endif %}
               {% else %}
-              <li><a href="https://patrowl.io/get-started"><span class="glyphicon glyphicon-th-list"></span> Users (PRO EDITION)</a></li>
+              <!--<li><a href="/users/pro/list"><span class="glyphicon glyphicon-th-list"></span> Users</a></li>-->
+<!--              <li><a href="https://patrowl.io/get-started"><span class="glyphicon glyphicon-th-list"></span> Users (PRO EDITION)</a></li>-->
               {% endif %}
               {% if PRO_EDITION %}
-              <li><a href="/teams/list"><span class="glyphicon glyphicon-th-large"></span>Teams</a></li>
+              <!--<li><a href="/teams/list"><span class="glyphicon glyphicon-th-large"></span>Teams</a></li>-->
               {% else %}
-              <li><a href="https://patrowl.io/get-started"><span class="glyphicon glyphicon-th-large"></span> Teams (PRO EDITION)</a></li>
+               <!--<li><a href="/teams/list"><span class="glyphicon glyphicon-th-large"></span>Teams</a></li>-->
+<!--              <li><a href="https://patrowl.io/get-started"><span class="glyphicon glyphicon-th-large"></span> Teams (PRO EDITION)</a></li>-->
               {% endif %}
 
               <li class="divider"></li>
-              <li><a href="/users/details"><span class="glyphicon glyphicon-user"></span> My account</a></li>
+              <li><a href="/users/details"><span class="glyphicon glyphicon-user">我的信息</span></a></li>
               {% if PRO_EDITION %}
                 {% if request.user.profile.is_delegated == False %}
-                <li><a href="/users/editpw"><span class="glyphicon glyphicon-lock"></span> Change my password</a></li>
+                     {% if request.user.is_superuser %}
+                    <li><a href="/admin/password_change/"><span class="glyphicon glyphicon-lock"></span>修改登录密码</a></li>
+                    {% endif %}
                 {% endif %}
               {% else %}
-              <li><a href="/users/editpw"><span class="glyphicon glyphicon-lock"></span> Change my password</a></li>
+                        {% if request.user.is_superuser %}
+                    <li><a href="/admin/password_change/"><span class="glyphicon glyphicon-lock"></span>修改登录密码</a></li>
+                    {% endif %}
               {% endif %}
               {% if PRO_EDITION %}
                 {% if request.user.is_superuser %}
-                <li><a href="/logout"><span class="glyphicon glyphicon-log-out"></span> Logout</a></li>
+                <li><a href="/logout"><span class="glyphicon glyphicon-log-out"></span> 退出</a></li>
                 {% elif request.user.profile.is_delegated == True %}
                 <!-- <li><a href="/oauth2/logout"><span class="glyphicon glyphicon-log-out"></span> Logout</a></li> -->
-                <li><a href="#" class="btn-logout-sso"><span class="glyphicon glyphicon-log-out"></span> Logout</a></li>
+                <li><a href="#" class="btn-logout-sso"><span class="glyphicon glyphicon-log-out"></span> 退出</a></li>
                 {% else %}
-                <li><a href="/logout"><span class="glyphicon glyphicon-log-out"></span> Logout</a></li>
+                <li><a href="/logout"><span class="glyphicon glyphicon-log-out"></span> 退出</a></li>
                 {% endif %}
               {% else %}
-              <li><a href="/logout"><span class="glyphicon glyphicon-log-out"></span> Logout</a></li>
+              <li><a href="/logout"><span class="glyphicon glyphicon-log-out"></span> 退出</a></li>
               {% endif %}
             </ul>
           </li>
@@ -563,13 +554,8 @@
     <footer class="footer">
       <div class="container-fluid">
         <div class="col-sm-6">
-          <span class="text-muted">PatrOwl Manager 2018-2021 - version: {{ PATROWL_VERSION }}</span>
-          <a href="https://github.com/Patrowl/PatrowlManager"><i class="text-muted fab fa-github fa-lg"></i></a>
-          <a href="https://twitter.com/patrowl_io"><i class="text-muted fab fa-twitter fa-lg"></i></a>
-          <a href="https://www.linkedin.com/company/patrowl/"><i class="text-muted fab fa-linkedin fa-lg"></i></a>
-          {% if PRO_EDITION == False %}
-            <a href="https://patrowl.io/"><span class="label label-warning">Pro Edition available</span></a>
-          {% endif %}
+          <span class="text-muted">扫描工具管理平台 2018-2021 - version: {{ PATROWL_VERSION }}</span>
+       
         </div>
         {% if user.is_authenticated %}
         <div class="col-sm-6">

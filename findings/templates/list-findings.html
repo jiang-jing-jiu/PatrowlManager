@@ -25,9 +25,9 @@ function toggle(source, element) {
 </script>
 
 <ul class="breadcrumb">
-  <li><a href="{% url 'list_findings_view' %}">findings</a></li>
+  <li><a href="{% url 'list_findings_view' %}">扫描</a></li>
   {% if PRO_EDITION %}
-  <li class="active">
+  <li class="active" style="display: none">
     Team:
     <select id="team_select" class="form-control form-control-xs" style="width:auto; display:inline-block; padding:0;">
       <option value="-1" selected>All</option>
@@ -37,33 +37,31 @@ function toggle(source, element) {
     </select>
   </li>
   {% endif %}
-  <!-- <li class="active">list ({{ findings.number }} results)</li> -->
-  <li class="active">list</li>
+  <li class="active">列表 ({{ nb_findings }} 数据)</li>
 </ul>
 
 <div class="container-fluid">
 	<div class="btn-group">
-    <a href="{% url 'list_findings_view' %}" class="btn btn-xs btn-primary">Quick filters</a>
+    <a href="{% url 'list_findings_view' %}" class="btn btn-xs btn-primary">快速筛选</a>
     <a href="#" class="btn btn-xs btn-primary dropdown-toggle" data-toggle="dropdown"><span class="caret"></span></a>
     <ul class="dropdown-menu">
-      <li><a href="{% url 'list_findings_view' %}">Show all findings</a></li>
-      <li><a href="{% url 'list_findings_view' %}?_status=new">Show new findings</a></li>
-      <li><a href="{% url 'list_findings_view' %}?_status=ack">Show acked findings</a></li>
+      <li><a href="{% url 'list_findings_view' %}">显示所有结果</a></li>
+      <li><a href="{% url 'list_findings_view' %}?_status=new">显示新发现</a></li>
+      <li><a href="{% url 'list_findings_view' %}?_status=ack">显示确认的结果</a></li>
     </ul>
   </div>
-  / <button type="button" class="btn btn-default btn-xs" data-toggle="modal" data-target="#modal-filters">Advanced filters</button>
-
+  or <button type="button" class="btn btn-default btn-xs" data-toggle="modal" data-target="#modal-filters">高级过滤器</button>
   <table class="table table-hover" id="table-findings">
     <thead>
       <tr>
         <th data-field="cb"><input type="checkbox" onClick="toggle(this, 'finding')" /></th>
-        <th data-field="asset_value">Asset</th>
-        <th data-field="title">Title</th>
-        <th data-field="severity">Severity</th>
-        <th data-field="status">Status</th>
-        <th data-field="engine_type">From</th>
-        <th data-field="updated_at">Last update</th>
-        <th data-field="actions">Actions</th>
+        <th data-field="asset_value">资产</th>
+        <th data-field="title">标题</th>
+        <th data-field="severity">严重程度</th>
+        <th data-field="status">状态</th>
+        <th data-field="engine_type">来自</th>
+        <th data-field="updated_at">上次更新</th>
+        <th data-field="actions">操作</th>
       </tr>
     </thead>
     <tbody>
@@ -73,15 +71,15 @@ function toggle(source, element) {
       <td>{{ finding.asset_name|truncatechars:60 }}</td>
       <td>{{ finding.title|truncatechars:60 }}</td>
       {% if finding.severity == 'critical' %}
-      <td><span class="label label-critical">{{ finding.severity }}</span></td>
+      <td><span class="label label-critical">严重的</span></td>
       {% elif finding.severity == 'high' %}
-      <td><span class="label label-high">{{ finding.severity }}</span></td>
+      <td><span class="label label-high">高风险的</span></td>
       {% elif finding.severity == 'medium' or finding.severity == 'moderate' %}
-      <td><span class="label label-medium">{{ finding.severity }}</span></td>
+      <td><span class="label label-medium">中等的</span></td>
       {% elif finding.severity == 'low' %}
-      <td><span class="label label-low">{{ finding.severity }}</span></td>
+      <td><span class="label label-low">低风险的</span></td>
       {% else %}
-      <td><span class="label label-info">{{ finding.severity }}</span></td>
+      <td><span class="label label-info">提示信息</span></td>
       {% endif %}
       {% if finding.status == 'new' %}
       <td class="text-danger">{{ finding.status }}</td>
@@ -114,28 +112,27 @@ function toggle(source, element) {
   </tbody>
   </table>
 
-  <a href="#" class="btn-compare-selected">// Compare findings</a><br/>
-  <a class="text-default btn-export-selected" href="#">% Export selected findings (CSV)</a> or <a class="text-default btn-export-filtered" href="#">Export all filtered findings (CSV)</a><br/>
+  <a href="#" class="btn-compare-selected">// 比较结果</a><br/>
+  <a class="text-default btn-export-selected" href="#">% 导出选定结果 （CSV）</a><br/>
+  <a class="text-default btn-export-filtered" href="#">% 导出过滤结果 （CSV）</a><br/>
 
   {% if PRO_EDITION %}
     {% if request.user.is_superuser or request.user|has_role:"MANAGER" or request.user|has_role:"ANALYST" %}
-    <a href="/findings/add">+ Add a new finding manually</a><br/>
-    <a class="text-warning btn-ack" href="#">* Ack selected findings</a><br/>
-    <a class="text-danger btn-delete-selected" href="#">- Delete selected findings (no confirm)</a> or
-       <a class="text-danger" data-toggle="modal" data-target="#modal-delete-filtered-findings">Delete all filtered findings</a>
+    <a href="/findings/add">+ 手动添加新查找</a><br/>
+    <a class="text-warning btn-ack" href="#">* 确认选定的结果</a><br/>
+    <a class="text-danger btn-delete-selected" href="#">- 删除所选结果（无确认）</a>
     {% endif %}
   {% else %}
-  <a href="/findings/add">+ Add a new finding manually</a><br/>
-  <a class="text-warning btn-ack" href="#">* Ack selected findings</a><br/>
-  <a class="text-danger btn-delete-selected" href="#">- Delete selected findings (no confirm)</a> or
-  <a class="text-danger" href="#" data-toggle="modal" data-target="#modal-delete-filtered-findings">Delete all filtered findings</a>
+  <a href="/findings/add">+ 手动添加新查找</a><br/>
+  <a class="text-warning btn-ack" href="#">* 确认选定的结果</a><br/>
+  <a class="text-danger btn-delete-selected" href="#">- 删除所选结果（无确认）</a>
   {% endif %}
 	<br/><br/>
 
 	<div style="display: inline-flex;">
 		<ul class="pagination pagination-xs">
 			{% if findings.number == 1 %}
-				<li class="page-item disabled"><span>&laquo;&laquo;</span></li>
+				<li class="disabled"><span>⇤</span></li>
 			{% else %}
 				<li class="page-item"><a class="page-link" href="#" onclick="gotopage(1);">&laquo;&laquo;</a></li>
 			{% endif %}
@@ -171,20 +168,20 @@ function toggle(source, element) {
 				<option value="50" selected>50</option>
 				<option value="200">200</option>
 			</select>
-			findings per page
+			条/每页
 		</div>
 	</div>
 
   {% if messages %}
   <ul class="messages">
     {% for message in messages %}
-    <li {% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message }}</li>
+    <li{% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message }}</li>
     {% endfor %}
   </ul>
   {% endif %}
 </div>
 
-<!-- Delete finding modal -->
+<!-- Delete scan definition modal -->
 <div class="modal fade" id="modal-delete-finding" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
   <div class="modal-dialog">
     <div class="modal-content">
@@ -194,40 +191,17 @@ function toggle(source, element) {
           <span aria-hidden="true">&times;</span>
           <span class="sr-only">Close</span>
         </button>
-        <h4 class="modal-title" id="myModalLabel">Delete Finding ?</h4>
+        <h4 class="modal-title" id="myModalLabel">删除该条扫描结果 ?</h4>
       </div>
 
       <!-- Modal Body -->
       <div class="modal-body">
         <div id="delete-finding">
-          <!-- Content -->
+          <!-- Content  -->
         </div>
-        Confirm Deleting?
-        <button type="button" class="btn btn-xs btn-warning btn-delete-finding" data-dismiss="modal">Yes</button>
-        <button type="button" class="btn btn-xs btn-primary" data-dismiss="modal">No</button>
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- Delete filtered findings modal -->
-<div class="modal fade" id="modal-delete-filtered-findings" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
-  <div class="modal-dialog">
-    <div class="modal-content">
-      <!-- Modal Header -->
-      <div class="modal-header bg-primary">
-        <button type="button" class="close" data-dismiss="modal">
-          <span aria-hidden="true">&times;</span>
-          <span class="sr-only">Close</span>
-        </button>
-        <h4 class="modal-title" id="myModalLabel">Delete all filtered finding(s) ?</h4>
-      </div>
-
-      <!-- Modal Body -->
-      <div class="modal-body">
-        Confirm Deleting?
-        <button type="button" class="btn btn-xs btn-warning btn-delete-filtered" data-dismiss="modal">Yes</button>
-        <button type="button" class="btn btn-xs btn-primary" data-dismiss="modal">No</button>
+        确认删除?
+        <button type="button" class="btn btn-xs btn-warning btn-delete-finding" data-dismiss="modal">是</button>
+        <button type="button" class="btn btn-xs btn-primary" data-dismiss="modal">否</button>
       </div>
     </div>
   </div>
@@ -244,7 +218,7 @@ function toggle(source, element) {
           <span aria-hidden="true">&times;</span>
           <span class="sr-only">Close</span>
         </button>
-        <h4 class="modal-title" id="myModalLabel">Filter findings</h4>
+        <h4 class="modal-title" id="myModalLabel">高级查询</h4>
       </div>
 
       <!-- Modal Body -->
@@ -253,31 +227,31 @@ function toggle(source, element) {
           <form action="/findings/list" method="GET" id="finding-filter-form" class="form-horizontal">
           <!-- <form class="form-inline"> -->
 						<div class="form-group">
-	            <label class="col-sm-2 control-label" for="filter_startdate">Start at</label>
+	            <label class="col-sm-2 control-label" for="filter_startdate">开始时间</label>
 							<div class="col-sm-5">
 	              <input type="text" class="form-control input-append date input-sm" id="filter_startdate">
 							</div>
 						</div>
 
             <div class="form-group">
-              <label class="col-sm-2 control-label" for="filter_enddate">End at</label>
+              <label class="col-sm-2 control-label" for="filter_enddate">结束时间</label>
 							<div class="col-sm-5">
               	<input type="text" class="form-control input-append date input-sm" id="filter_enddate">
 							</div>
             </div>
 
             <div class="form-group">
-              <label class="col-sm-2 control-label" for="filter_asset_value_label">Asset value</label>
+              <label class="col-sm-2 control-label" for="filter_asset_value_label">资产筛选</label>
 							<div class="col-sm-2">
 	              <select class="form-control input-sm" id="filter_asset_value_condition">
-	                <option value="exact">is exactly</option>
-	                <option value="not_exact">is not exactly</option>
-	                <option value="icontains">contains</option>
-	                <option value="not_icontains">does not contain</option>
-	                <option value="istartswith">start with</option>
-	                <option value="not_istartswith">does not start with</option>
-	                <option value="iendswith">end with</option>
-	                <option value="not_iendswith">does not end with</option>
+	                <option value="exact">资产等于</option>
+	                <option value="not_exact">资产不等于</option>
+	                <option value="icontains">资产包含</option>
+	                <option value="not_icontains">资产不包含</option>
+	                <option value="istartwith">开始于</option>
+	                <option value="not_istartwith">不是以...开始</option>
+	                <option value="iendwith">结束于</option>
+	                <option value="not_iendwith">不是以...结束</option>
 	              </select>
 							</div>
 							<div class="col-sm-3">
@@ -286,56 +260,17 @@ function toggle(source, element) {
             </div>
 
             <div class="form-group">
-              <label class="col-sm-2 control-label" for="filter_asset_tags_value_label">Asset tags</label>
-							<div class="col-sm-2">
-	              <select class="form-control input-sm" id="filter_asset_tags_value_condition">
-	                <option value="exact">is exactly</option>
-	                <option value="not_exact">is not exactly</option>
-	                <option value="icontains">contains</option>
-	                <option value="not_icontains">does not contain</option>
-	                <option value="istartswith">start with</option>
-	                <option value="not_istartswith">does not start with</option>
-	                <option value="iendswith">end with</option>
-	                <option value="not_iendswith">does not end with</option>
-	              </select>
-							</div>
-							<div class="col-sm-3">
-	              <input type="text" class="form-control input-sm" id="filter_asset_tags_value_input">
-							</div>
-            </div>
-
-
-            <div class="form-group">
-              <label class="col-sm-2 control-label" for="filter_assetgroup_value_label">Asset Group name</label>
-							<div class="col-sm-2">
-	              <select class="form-control input-sm" id="filter_assetgroup_value_condition">
-	                <option value="exact">is exactly</option>
-	                <option value="not_exact">is not exactly</option>
-	                <option value="icontains">contains</option>
-	                <option value="not_icontains">does not contain</option>
-	                <option value="istartswith">start with</option>
-	                <option value="not_istartswith">does not start with</option>
-	                <option value="iendswith">end with</option>
-	                <option value="not_iendswith">does not end with</option>
-	              </select>
-							</div>
-							<div class="col-sm-3">
-	              <input type="text" class="form-control input-sm" id="filter_assetgroup_value_input">
-							</div>
-            </div>
-
-            <div class="form-group">
-              <label class="col-sm-2 control-label" for="filter_finding_title_label">Finding title</label>
+              <label class="col-sm-2 control-label" for="filter_finding_title_label">查找标题</label>
 							<div class="col-sm-2">
 	              <select class="form-control input-sm" id="filter_finding_title_condition">
-									<option value="exact">is exactly</option>
-									<option value="not_exact">is not exactly</option>
-									<option value="icontains">contains</option>
-									<option value="not_icontains">does not contain</option>
-									<option value="istartswith">start with</option>
-									<option value="not_istartswith">does not start with</option>
-									<option value="iendswith">end with</option>
-									<option value="not_iendswith">does not end with</option>
+									<option value="exact">资产等于</option>
+									<option value="not_exact">资产不等于</option>
+									<option value="icontains">资产包含</option>
+									<option value="not_icontains">资产不包含</option>
+									<option value="istartwith">开始于</option>
+									<option value="not_istartwith">不是以...开始</option>
+									<option value="iendwith">结束于</option>
+									<option value="not_iendwith">不是以...结束</option>
 	              </select>
 							</div>
 							<div class="col-sm-3">
@@ -344,100 +279,61 @@ function toggle(source, element) {
             </div>
 
             <div class="form-group">
-              <label class="col-sm-2 control-label" for="filter_finding_description_label">Finding description</label>
-							<div class="col-sm-2">
-	              <select class="form-control input-sm" id="filter_finding_description_condition">
-									<option value="exact">is exactly</option>
-									<option value="not_exact">is not exactly</option>
-									<option value="icontains">contains</option>
-									<option value="not_icontains">does not contain</option>
-									<option value="istartswith">start with</option>
-									<option value="not_istartswith">does not start with</option>
-									<option value="iendswith">end with</option>
-									<option value="not_iendswith">does not end with</option>
-	              </select>
-							</div>
-							<div class="col-sm-3">
-	              <input type="text" class="form-control input-sm" id="filter_finding_description_input">
-							</div>
-            </div>
-
-            <div class="form-group">
-              <label class="col-sm-2 control-label" for="filter_finding_severity_label">Finding severity</label>
+              <label class="col-sm-2 control-label" for="filter_finding_severity_label">严重性</label>
 							<div class="col-sm-2">
 	              <select class="form-control input-sm" id="filter_finding_severity_condition">
-	                <option value="exact">is</option>
-	                <option value="not_exact">is not</option>
+	                <option value="exact">等于</option>
+	                <option value="not_exact">不等于</option>
 	              </select>
 							</div>
 							<div class="col-sm-3">
 	              <select class="form-control input-sm" id="filter_finding_severity_selection">
 	                <option value="none" selected>-</option>
-	                <option value="critical">Critical</option>
-	                <option value="high">High</option>
-	                <option value="medium">Medium</option>
-	                <option value="low">Low</option>
-	                <option value="info">Info</option>
+	                <option value="critical">严重的</option>
+	                <option value="high">高风险</option>
+	                <option value="medium">中风险</option>
+	                <option value="low">低风险</option>
+	                <option value="info">超低风险</option>
 	              </select>
 							</div>
             </div>
 
             <div class="form-group">
-              <label class="col-sm-2 control-label" for="filter_finding_status_label">Finding status</label>
+              <label class="col-sm-2 control-label" for="filter_finding_status_label">风险状态</label>
 							<div class="col-sm-2">
 	              <select class="form-control input-sm" id="filter_finding_status_condition">
-	                <option value="exact">is</option>
-	                <option value="not_exact">is not</option>
+	                <option value="exact">等于</option>
+	                <option value="not_exact">不等于</option>
 	              </select>
 							</div>
 							<div class="col-sm-3">
 	              <select class="form-control input-sm" id="filter_finding_status_selection">
 	                <option value="none" selected>-</option>
-	                <option value="new">New</option>
-	                <option value="ack">Acknowledged</option>
-	                <option value="reopened">Reopened</option>
-	                <option value="mitigated">Mitigated</option>
-	                <option value="confirmed">Confirmed</option>
-	                <option value="patched">Patched</option>
-	                <option value="closed">Closed</option>
-	                <option value="false-positive">False-Positive</option>
-                  <option value="duplicate">Duplicate</option>
-	                <option value="undone">Undone</option>
+	                <option value="new">新风险</option>
+	                <option value="ack">公认的</option>
+	                <option value="mitigated">较轻的</option>
+	                <option value="confirmed">认证的</option>
+	                <option value="patched">处理过的</option>
+	                <option value="closed">已关闭的</option>
+	                <option value="false-positive">误报的</option>
+                      <option value="duplicate">副本</option>
+	                <option value="undone">撤销的</option>
 	              </select>
-							</div>
-            </div>
-
-            <div class="form-group">
-              <label class="col-sm-2 control-label" for="filter_finding_tags_label">Finding tags</label>
-							<div class="col-sm-2">
-	              <select class="form-control input-sm" id="filter_finding_tags_condition">
-									<option value="exact">is exactly</option>
-									<option value="not_exact">is not exactly</option>
-									<option value="icontains">contains</option>
-									<option value="not_icontains">does not contain</option>
-									<option value="istartswith">start with</option>
-									<option value="not_istartswith">does not start with</option>
-									<option value="iendswith">end with</option>
-									<option value="not_iendswith">does not end with</option>
-	              </select>
-							</div>
-							<div class="col-sm-3">
-	              <input type="text" class="form-control input-sm" id="filter_finding_tags_input">
 							</div>
             </div>
 
 						<div class="form-group">
-              <label class="col-sm-2 control-label" for="filter_finding_type_label">Finding type</label>
+              <label class="col-sm-2 control-label" for="filter_finding_type_label">风险类型</label>
 							<div class="col-sm-2">
 	              <select class="form-control input-sm" id="filter_finding_type_condition">
-									<option value="exact">is exactly</option>
-									<option value="not_exact">is not exactly</option>
-									<option value="icontains">contains</option>
-									<option value="not_icontains">does not contain</option>
-									<option value="istartswith">start with</option>
-									<option value="not_istartswith">does not start with</option>
-									<option value="iendswith">end with</option>
-									<option value="not_iendswith">does not end with</option>
+									<option value="exact">资产等于</option>
+									<option value="not_exact">资产不等于</option>
+									<option value="icontains">资产包含</option>
+									<option value="not_icontains">资产不包含</option>
+									<option value="istartwith">开始于</option>
+									<option value="not_istartwith">不是以...开始</option>
+									<option value="iendwith">结束于</option>
+									<option value="not_iendwith">不是以...结束</option>
 	              </select>
 							</div>
 							<div class="col-sm-3">
@@ -446,7 +342,7 @@ function toggle(source, element) {
             </div>
 
 						<div class="form-group">
-              <label class="col-sm-2 control-label" for="filter_finding_ref_label">Finding reference</label>
+              <label class="col-sm-2 control-label" for="filter_finding_ref_label">风险查阅</label>
 							<div class="col-sm-2">
 	              <select class="form-control input-sm" id="filter_finding_ref_condition">
 	                <option value="CVE">CVE</option>
@@ -465,11 +361,11 @@ function toggle(source, element) {
 
             {% if not PRO_EDITION %}
             <div class="form-group">
-              <label class="col-sm-2 control-label" for="filter_finding_own_label">Finding owner</label>
+              <label class="col-sm-2 control-label" for="filter_finding_own_label">风险负责人</label>
 							<div class="col-sm-2">
 	              <select class="form-control input-sm" id="filter_finding_own_condition">
-	                <option value="exact">is</option>
-	                <option value="not_exact">is not</option>
+	                <option value="exact">等于</option>
+	                <option value="not_exact">不等于</option>
 	              </select>
 							</div>
 							<div class="col-sm-3">
@@ -483,50 +379,33 @@ function toggle(source, element) {
             </div>
             {% endif %}
 
-            <div class="form-group">
-              <label class="col-sm-2 control-label" for="filter_engine_name_label">Engine</label>
-							<div class="col-sm-2">
-	              <select class="form-control input-sm" id="filter_engine_name_condition">
-	                <option value="exact">is</option>
-	                <option value="not_exact">is not</option>
+            <!-- <div class="form-group">
+              <label class="col-sm-2 control-label" for="filter_asset_tags">Asset tags</label>
+							<div class="col-sm-1">
+								<select class="form-control input-sm" id="filter_asset_tag_condition">
+	                <option value="is">is</option>
+	                <option value="is_not">is not</option>
+	                <option value="contains">contains</option>
+	                <option value="contains_not">does not contain</option>
+	                <option value="start">start with</option>
+	                <option value="start_not">does not start with</option>
+	                <option value="end">end with</option>
+	                <option value="end_not">does not end with</option>
 	              </select>
 							</div>
-							<div class="col-sm-3">
-	              <select class="form-control input-sm" id="filter_engine_name_selection">
-	                <option value="none" selected>-</option>
-                  {% for engine in engines %}
-                  <option value="{{engine.name}}">{{engine.name}}</option>
-                  {% endfor %}
-	              </select>
+							<div class="col-sm-4">
+	              <input type="text" class="form-control input-sm" id="filter_asset_tags">
 							</div>
-            </div>
+            </div> -->
 
-            <div class="form-group">
-              <label class="col-sm-2 control-label" for="filter_scan_title_label">Scan title</label>
-							<div class="col-sm-2">
-	              <select class="form-control input-sm" id="filter_scan_title_condition">
-									<option value="exact">is exactly</option>
-									<option value="not_exact">is not exactly</option>
-									<option value="icontains">contains</option>
-									<option value="not_icontains">does not contain</option>
-									<option value="istartswith">start with</option>
-									<option value="not_istartswith">does not start with</option>
-									<option value="iendswith">end with</option>
-									<option value="not_iendswith">does not end with</option>
-	              </select>
-							</div>
-							<div class="col-sm-3">
-	              <input type="text" class="form-control input-sm" id="filter_scan_title_input">
-							</div>
-            </div>
-
+		        <!-- <button type="submit" class="btn btn-xs btn-warning btn-save-filters" data-dismiss="modal">Yes</button>
+		        <button type="button" class="btn btn-xs btn-primary" data-dismiss="modal">No</button> -->
 						<div>
-							<label class="col-sm-2 control-label">Apply ?</label>
+							<label class="col-sm-2 control-label">确认查找?</label>
 							<div class="btn-group">
-							 <button type="submit" class="btn btn-xs btn-success btn-save-filters" data-dismiss="modal" style="margin-left: 5px;">Yes</button>
-							 <button type="button" class="btn btn-xs btn-primary" data-dismiss="modal">No</button>
+							 <button type="submit" class="btn btn-xs btn-warning btn-save-filters" data-dismiss="modal" style="margin-left: 5px;">确定</button>
+							 <button type="button" class="btn btn-xs btn-primary" data-dismiss="modal">取消</button>
 							</div>
-							<button type="button" class="btn btn-xs btn-warning" onclick="resetFilterForm()">Reset</button>
 						</div>
           </form>
         </div>
@@ -538,81 +417,14 @@ function toggle(source, element) {
 <script>
 
 	url = new URL(window.location.href);
-
+    console.log(url)
 	function gotopage(page_num) {
 		url.searchParams.set("page", page_num);
 		window.location = url.search;
 	};
 
-  function resetFilterForm(){
-    window.location = window.location.href.split("?")[0];
-  };
-
-  function initFilterForm(){
-    if (url.searchParams.get("_startdate") != null) {
-      $('#filter_startdate').val(url.searchParams.get("_startdate"))
-    }
-    if (url.searchParams.get("_enddate") != null) {
-      $('#filter_enddate').val(url.searchParams.get("_enddate"))
-    }
-    if (url.searchParams.get("_asset_value") != null && url.searchParams.get("_asset_value_cond") != null) {
-      $('#filter_asset_value_input').val(url.searchParams.get("_asset_value"))
-      $('#filter_asset_value_condition').val(url.searchParams.get("_asset_value_cond"))
-    }
-    if (url.searchParams.get("_asset_tags_value") != null && url.searchParams.get("_asset_tags_value_cond") != null) {
-      $('#filter_asset_tags_value_input').val(url.searchParams.get("_asset_tags_value"))
-      $('#filter_asset_tags_value_condition').val(url.searchParams.get("_asset_tags_value_cond"))
-    }
-    if (url.searchParams.get("_assetgroup_value") != null && url.searchParams.get("_assetgroup_value_cond") != null) {
-      $('#filter_assetgroup_value_input').val(url.searchParams.get("_assetgroup_value"))
-      $('#filter_assetgroup_value_condition').val(url.searchParams.get("_assetgroup_value_cond"))
-    }
-    if (url.searchParams.get("_title") != null && url.searchParams.get("_title_cond") != null) {
-      $('#filter_finding_title_input').val(url.searchParams.get("_title"))
-      $('#filter_finding_title_condition').val(url.searchParams.get("_title_cond"))
-    }
-    if (url.searchParams.get("_description") != null && url.searchParams.get("_description_cond") != null) {
-      $('#filter_finding_description_input').val(url.searchParams.get("_description"))
-      $('#filter_finding_description_condition').val(url.searchParams.get("_description_cond"))
-    }
-    if (url.searchParams.get("_type") != null && url.searchParams.get("_type_cond") != null) {
-      $('#filter_finding_type_input').val(url.searchParams.get("_type"))
-      $('#filter_finding_type_condition').val(url.searchParams.get("_type_cond"))
-    }
-    if (url.searchParams.get("_tags") != null && url.searchParams.get("_tags_cond") != null) {
-      $('#filter_finding_tags_input').val(url.searchParams.get("_tags"))
-      $('#filter_finding_tags_condition').val(url.searchParams.get("_tags_cond"))
-    }
-    if (url.searchParams.get("_severity") != null && url.searchParams.get("_severity_cond") != null) {
-      $('#filter_finding_severity_selection').val(url.searchParams.get("_severity"))
-      $('#filter_finding_severity_condition').val(url.searchParams.get("_severity_cond"))
-    }
-    if (url.searchParams.get("_status") != null && url.searchParams.get("_status_cond") != null) {
-      $('#filter_finding_status_selection').val(url.searchParams.get("_status"))
-      $('#filter_finding_status_condition').val(url.searchParams.get("_status_cond"))
-    }
-    if (url.searchParams.get("_engine") != null && url.searchParams.get("_engine_cond") != null) {
-      $('#filter_engine_name_selection').val(url.searchParams.get("_engine"))
-      $('#filter_engine_name_condition').val(url.searchParams.get("_engine_cond"))
-    }
-    if (url.searchParams.get("_reference") != null && url.searchParams.get("_reference_cond") != null) {
-      $('#filter_finding_ref_input').val(url.searchParams.get("_reference"))
-      $('#filter_finding_ref_condition').val(url.searchParams.get("_reference_cond"))
-    }
-    if (url.searchParams.get("_owner") != null && url.searchParams.get("_owner_cond") != null) {
-      $('#filter_finding_own_input').val(url.searchParams.get("_owner"))
-      $('#filter_finding_own_condition').val(url.searchParams.get("_owner_cond"))
-    }
-    if (url.searchParams.get("_scan_title") != null && url.searchParams.get("_scan_title_cond") != null) {
-      $('#filter_scan_title_input').val(url.searchParams.get("_scan_title"))
-      $('#filter_scan_title_condition').val(url.searchParams.get("_scan_title_cond"))
-    }
-  };
-
 
   $(function() {
-
-    initFilterForm();
 
     // Select team by id
     $('#team_select').val(url.searchParams.get("team", "-1"));
@@ -640,39 +452,17 @@ function toggle(source, element) {
 		// Apply filters
 		$('button.btn-save-filters').on('click', function (e){
 			filter_findings_url = "{% url 'list_findings_view' %}?";
-			if ($('input#filter_startdate').val() != "") {
-				filter_findings_url+="&_startdate="+$('#filter_startdate').val();
-			}
-			if ($('input#filter_enddate').val() != "") {
-				filter_findings_url+="&_enddate="+$('#filter_enddate').val();
-			}
 			if ($('input#filter_asset_value_input').val() != "") {
 				filter_findings_url+="&_asset_value="+$('#filter_asset_value_input').val();
 				filter_findings_url+="&_asset_value_cond="+$('#filter_asset_value_condition').val();
-			}
-			if ($('input#filter_asset_tags_value_input').val() != "") {
-				filter_findings_url+="&_asset_tags_value="+$('#filter_asset_tags_value_input').val();
-				filter_findings_url+="&_asset_tags_value_cond="+$('#filter_asset_tags_value_condition').val();
-			}
-			if ($('input#filter_assetgroup_value_input').val() != "") {
-				filter_findings_url+="&_assetgroup_value="+$('#filter_assetgroup_value_input').val();
-				filter_findings_url+="&_assetgroup_value_cond="+$('#filter_assetgroup_value_condition').val();
 			}
 			if ($('input#filter_finding_title_input').val() != "") {
 				filter_findings_url+="&_title="+$('#filter_finding_title_input').val();
 				filter_findings_url+="&_title_cond="+$('#filter_finding_title_condition').val();
 			}
-			if ($('input#filter_finding_description_input').val() != "") {
-				filter_findings_url+="&_description="+$('#filter_finding_description_input').val();
-				filter_findings_url+="&_description_cond="+$('#filter_finding_description_condition').val();
-			}
 			if ($('input#filter_finding_type_input').val() != "") {
 				filter_findings_url+="&_type="+$('#filter_finding_type_input').val();
 				filter_findings_url+="&_type_cond="+$('#filter_finding_type_condition').val();
-			}
-			if ($('input#filter_finding_tags_input').val() != "") {
-				filter_findings_url+="&_tags="+$('#filter_finding_tags_input').val();
-				filter_findings_url+="&_tags_cond="+$('#filter_finding_tags_condition').val();
 			}
 			if ($('input#filter_finding_severity_selection').val() != "") {
 				filter_findings_url+="&_severity="+$('#filter_finding_severity_selection').val();
@@ -682,10 +472,6 @@ function toggle(source, element) {
 				filter_findings_url+="&_status="+$('#filter_finding_status_selection').val();
 				filter_findings_url+="&_status_cond="+$('#filter_finding_status_condition').val();
 			}
-			if ($('input#filter_engine_name_selection').val() != "") {
-				filter_findings_url+="&_engine="+$('#filter_engine_name_selection').val();
-				filter_findings_url+="&_engine_cond="+$('#filter_engine_name_condition').val();
-			}
 			if ($('input#filter_finding_ref_input').val() != "") {
 				filter_findings_url+="&_reference="+$('#filter_finding_ref_input').val();
 				filter_findings_url+="&_reference_cond="+$('#filter_finding_ref_condition').val();
@@ -693,10 +479,6 @@ function toggle(source, element) {
 			if ($('input#filter_finding_own_input').val() != "") {
 				filter_findings_url+="&_owner="+$('#filter_finding_own_input').val();
 				filter_findings_url+="&_owner_cond="+$('#filter_finding_own_condition').val();
-			}
-      if ($('input#filter_scan_title_input').val() != "") {
-				filter_findings_url+="&_scan_title="+$('#filter_scan_title_input').val();
-				filter_findings_url+="&_scan_title_cond="+$('#filter_scan_title_condition').val();
 			}
 
       // Set the team
@@ -715,9 +497,8 @@ function toggle(source, element) {
       finding_severity = e.relatedTarget.getAttribute('finding-severity');
       $("div#delete-finding").attr('finding-id', finding_id);
       $("div#delete-finding").html(
-				"Title: <b>"+escapeHtml(finding_title)+"</b><br/> \
-				Asset: <b>"+escapeHtml(finding_asset)+"</b><br/> \
-				Severity: <b>"+escapeHtml(finding_severity)+"</b><br/><br/>"
+				"标题: <b>"+finding_title+"</b><br/> \
+				资产: <b>"+finding_asset+"</b><br/> "
 			);
     });
     $("button.btn-delete-finding").on('click', function (e) {
@@ -784,7 +565,7 @@ function toggle(source, element) {
       }
     });
 
-    // Export all filtered findings
+    // Export filtered findings
     $("a.btn-export-filtered").on('click', function(eventObject) {
       var request = $.ajax({
         url: "{% url 'export_filtered_findings_csv_api' %}"+window.location.search,
@@ -797,18 +578,6 @@ function toggle(source, element) {
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
-			});
-    });
-
-    // Delete all filtered findings
-    $("a.btn-delete-filtered").on('click', function(eventObject) {
-      var request = $.ajax({
-        url: "{% url 'delete_filtered_findings_api' %}"+window.location.search,
-        method: "GET",
-      }).done(function(response){
-        if (response.status == 'success'){
-          location.reload();
-        }
 			});
     });
 
@@ -837,7 +606,7 @@ function toggle(source, element) {
       }
     });
 
-    // Compare findings
+    // 比较结果
     $("a.btn-compare-selected").on('click', function (e) {
       findings_to_compare = []
       $("input[name='finding']").each(function(cbx){
@@ -854,7 +623,7 @@ function toggle(source, element) {
     $("#filter_startdate").datetimepicker({
       minuteStep: 5,
       autoclose: true,
-      language: 'en',
+      language: 'zh-CN',
       format: 'yyyy-mm-dd hh:ii:ss',
       clearBtn: true,
       showMeridian: false,
@@ -863,7 +632,7 @@ function toggle(source, element) {
     $("#filter_enddate").datetimepicker({
       minuteStep: 5,
       autoclose: true,
-      language: 'en',
+      language: 'zh-CN',
       format: 'yyyy-mm-dd hh:ii:ss',
       clearBtn: true,
       showMeridian: false,
@@ -874,13 +643,13 @@ function toggle(source, element) {
 		$("#filter_asset_tags").autocomplete({
 			source: function(req, response) {
 				 $.ajax({
-  					url: "/assets/get_tags",
-  					dataType: "json",
-  					success: function( data ) {
-  						var re = $.ui.autocomplete.escapeRegex(req.term);
-  						var matcher = new RegExp(re, "i" ); //Start with
-  						response($.grep(data, function(item){return matcher.test(item.value || item.label || item);}) );
-  					}
+					url: "/assets/get_tags",
+					dataType: "json",
+					success: function( data ) {
+						var re = $.ui.autocomplete.escapeRegex(req.term);
+						var matcher = new RegExp(re, "i" ); //Start with
+						response($.grep(data, function(item){return matcher.test(item.value || item.label || item);}) );
+						}
 					});
 			 },
 			minLength: 2,

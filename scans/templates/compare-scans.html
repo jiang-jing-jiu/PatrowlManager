@@ -9,7 +9,7 @@
 
 <ul class="breadcrumb">
   <li><a href="/scans/list">scans</a></li>
-  <li class="active">compare scan results [<a href="javascript:goBack()">back</a>]</li>
+  <li class="active">compare scan results [<a href="javascript:goBack()">返回</a>]</li>
 </ul>
 
 <div class="container-fluid">
@@ -43,10 +43,10 @@
       <table class="table table-hover">
         <thead>
           <tr>
-            <th scope="col"></th>
-            <th scope="col">Asset</th>
-            <th scope="col">Title</th>
-            <th scope="col">Severity</th>
+            <th></th>
+            <th>Asset</th>
+            <th>Title</th>
+            <th>Severity</th>
           </tr>
         </thead>
         <tbody>
@@ -64,15 +64,15 @@
             <td><a href="/findings/details/{{finding.id}}?raw=true">{{finding.title}}</a></td>
             <td>
               {% if finding.severity == 'critical' %}
-              <span class="label label-critical">{{ finding.severity }}</span>
+              <span class="label label-critical">严重的</span>
               {% elif finding.severity == 'high' %}
-              <span class="label label-high">{{ finding.severity }}</span>
+              <span class="label label-high">高风险的</span>
               {% elif finding.severity == 'medium' or finding.severity == 'moderate' %}
-              <span class="label label-medium">{{ finding.severity }}</span>
+              <span class="label label-medium">中等的</span>
               {% elif finding.severity == 'low' %}
-              <span class="label label-low">{{ finding.severity }}</span>
+              <span class="label label-low">低风险的</span>
               {% else %}
-              <span class="label label-info">{{ finding.severity }}</span>
+              <span class="label label-info">提示信息</span>
               {% endif %}
             </td>
           </tr>
@@ -112,10 +112,10 @@
         <table class="table table-hover">
           <thead>
             <tr>
-              <th scope="col"></th>
-              <th scope="col">Asset</th>
-              <th scope="col">Title</th>
-              <th scope="col">Severity</th>
+              <th></th>
+              <th>Asset</th>
+              <th>Title</th>
+              <th>Severity</th>
             </tr>
           </thead>
           <tbody>
@@ -134,15 +134,15 @@
               <td><a href="/findings/details/{{finding.id}}?raw=true">{{finding.title}}</a></td>
               <td>
                 {% if finding.severity == 'critical' %}
-                <span class="label label-critical">{{ finding.severity }}</span>
+                <span class="label label-critical">严重的</span>
                 {% elif finding.severity == 'high' %}
-                <span class="label label-high">{{ finding.severity }}</span>
+                <span class="label label-high">高风险的</span>
                 {% elif finding.severity == 'medium' or finding.severity == 'moderate' %}
-                <span class="label label-medium">{{ finding.severity }}</span>
+                <span class="label label-medium">中等的</span>
                 {% elif finding.severity == 'low' %}
-                <span class="label label-low">{{ finding.severity }}</span>
+                <span class="label label-low">低风险的</span>
                 {% else %}
-                <span class="label label-info">{{ finding.severity }}</span>
+                <span class="label label-info">提示信息</span>
                 {% endif %}
               </td>
             </tr>
@@ -158,7 +158,7 @@
   {% if messages %}
   <ul class="messages">
       {% for message in messages %}
-      <li {% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message }}</li>
+      <li{% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message }}</li>
       {% endfor %}
   </ul>
   {% endif %}

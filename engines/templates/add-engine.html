@@ -2,14 +2,14 @@
 {% block content %}
 
 <ul class="breadcrumb">
-  <li><a href="/engines/list">engines</a></li>
-  <li><a href="/engines/types/list">types</a></li>
-  <li class="active">add new engine type</li>
+  <li><a href="/engines/list">引擎</a></li>
+  <li><a href="/engines/types/list">类型</a></li>
+  <li class="active">添加引擎类型</li>
 </ul>
 
 <div class="container">
   <form action="/engines/types/add" method="post" class="form-horizontal">
-    <legend>Add a engine type</legend>
+    <legend>添加引擎类型</legend>
       {% csrf_token %}
       {% for field in form %}
           {% if field.errors %}
@@ -38,10 +38,12 @@
         <div class="col-sm-2">
         </div>
         <div class="col-sm-4">
-          <button type="submit" class="btn btn-warning col-sm-12">Create a new engine type</button>
+          <button type="submit" class="btn btn-warning col-sm-12">添加新的引擎类型</button>
         </div>
       </div>
   </form>
 </div>
-
+    <script>
+    $("#id_allowed_asset_types").html(' <li><label for="id_allowed_asset_types_0"><input type="checkbox" name="allowed_asset_types" value="ip" id="id_allowed_asset_types_0">ip</label> </li> <li><label for="id_allowed_asset_types_1"><input type="checkbox" name="allowed_asset_types" value="ip-range" id="id_allowed_asset_types_1">ip-范围</label> </li> <li><label for="id_allowed_asset_types_2"><input type="checkbox" name="allowed_asset_types" value="ip-subnet" id="id_allowed_asset_types_2">ip-子网</label> </li> <li><label for="id_allowed_asset_types_3"><input type="checkbox" name="allowed_asset_types" value="fqdn" id="id_allowed_asset_types_3">全限定域名(fqdn)</label> </li> <li><label for="id_allowed_asset_types_4"><input type="checkbox" name="allowed_asset_types" value="domain" id="id_allowed_asset_types_4">域名(domain)</label> </li> <li><label for="id_allowed_asset_types_5"><input type="checkbox" name="allowed_asset_types" value="url" id="id_allowed_asset_types_5">网址(url)</label> </li> <li><label for="id_allowed_asset_types_6"><input type="checkbox" name="allowed_asset_types" value="keyword" id="id_allowed_asset_types_6">关键字(keyword)</label> </li> <li><label for="id_allowed_asset_types_7"><input type="checkbox" name="allowed_asset_types" value="person" id="id_allowed_asset_types_7">负责人(person)</label> </li> <li><label for="id_allowed_asset_types_8"><input type="checkbox" name="allowed_asset_types" value="organisation" id="id_allowed_asset_types_8">组织(organisation)</label> </li> <li><label for="id_allowed_asset_types_9"><input type="checkbox" name="allowed_asset_types" value="path" id="id_allowed_asset_types_9">路径(path)</label> </li> <li><label for="id_allowed_asset_types_10"><input type="checkbox" name="allowed_asset_types" value="application" id="id_allowed_asset_types_10">应用(application)</label> </li>')
+    </script>
 {% endblock %}

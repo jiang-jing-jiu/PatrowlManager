@@ -1,8 +1,5 @@
 # -*- coding: utf-8 -*-
 
-import csv
-import copy
-
 from django.http import JsonResponse
 from django.forms.models import model_to_dict
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
@@ -11,23 +8,26 @@ from django.db.models.functions import Lower
 from django.conf import settings
 
 from django.contrib import messages
+from django.contrib.auth.decorators import user_passes_test
 from django.contrib.postgres.aggregates import ArrayAgg
 from django.shortcuts import render, redirect, get_object_or_404
-from findings.models import Finding
-from engines.models import EnginePolicyScope, Engine
-from scans.models import Scan, ScanDefinition
-from users.models import Team, TeamUser
-from common.utils import encoding, pro_group_required
+
 from .forms import AssetForm, AssetGroupForm, AssetBulkForm, AssetOwnerForm
 from .models import Asset, AssetGroup, AssetOwner, AssetCategory
 from .models import ASSET_INVESTIGATION_LINKS
 from .apis import _add_asset_tags
 from .utils import _get_allowed_team
+from findings.models import Finding
+from engines.models import EnginePolicyScope
+from scans.models import Scan, ScanDefinition
+from users.models import Team, TeamUser
+from common.utils import encoding, pro_permission_required, pro_group_required
 
+import csv
+import copy
 
 @pro_group_required('AssetsViewer', 'AssetsManager')
 def list_assets_view(request):
-    """List assets."""
     # Check team
     teamid_selected = -1
     if settings.PRO_EDITION is True and request.GET.get('team', '').isnumeric() and int(request.GET.get('team', -1)) >= 0:
@@ -54,24 +54,37 @@ def list_assets_view(request):
         "-risk_level__grade"
     ]
     sort_options = request.GET.get("sort", "-updated_at")
-    sort_options_valid = ["-updated_at"]
+    sort_options_valid = []
     for s in sort_options.split(","):
         if s in allowed_sort_options and s not in sort_options_valid:
             sort_options_valid.append(str(s))
 
     # Check Filtering options
-    # filter_options = request.GET.get("filter", "")
+    filter_options = request.GET.get("filter", "")
     filter_name = request.GET.get("filter_name", "")
     filter_type = request.GET.get("filter_type", "")
     filter_criticity = request.GET.get("filter_criticity", "")
     filter_tag = request.GET.get("filter_tag", "")
 
-    # filter_fields = {}
-
+    # Todo: filter on fields
+    # allowed_filter_fields = ["id", "name", "criticity", "type", "score","categories__value"]
+    # filter_criterias = filter_options.split(" ")
+    filter_fields = {}
+    # filter_opts = ""
+    # for criteria in filter_criterias:
+    #     field = criteria.split(":")
+    #     if len(field) > 1 and field[0] in allowed_filter_fields:
+    #         # allowed field
+    #         if field[0] == "score":
+    #             filter_fields.update({"risk_level__grade": field[1]})
+    #         else:
+    #             filter_fields.update({str(field[0]): field[1]})
+    #     else:
+    #         filter_opts = filter_opts + str(criteria.strip())
     if teamid_selected >= 0:
-        assets_list = Asset.objects.for_team(request.user, teamid_selected).prefetch_related('teams', 'categories').all()
+        assets_list = Asset.objects.for_team(request.user, teamid_selected).all()
     else:
-        assets_list = Asset.objects.for_user(request.user).prefetch_related('teams', 'categories').all()
+        assets_list = Asset.objects.for_user(request.user).all()
     filters = Q()
     if filter_name and filter_name != 'null':
         filter_name = filter_name.split(',')
@@ -86,7 +99,11 @@ def list_assets_view(request):
         # https://stackoverflow.com/questions/25831081/django-orm-dynamically-add-multiple-conditions-for-manytomanyfield
         for tag in filter_tag:
             assets_list = assets_list.filter(categories__value=tag)
-
+    
+    # 2021.11.28 权限新增
+    if request.user.id > 1:
+        filters &= Q(owner_id=request.user.id)
+        
     # Query
     if teamid_selected >= 0:
         assets_list = assets_list.filter(filters).annotate(
@@ -106,11 +123,35 @@ def list_assets_view(request):
                     default=Value("1"),
                     output_field=CharField())
                 ).annotate(cat_list=ArrayAgg('categories__value')).order_by(*sort_options_valid)
+    # if teamid_selected >= 0:
+    #     assets_list = Asset.objects.for_team(request.user, teamid_selected).filter(**filter_fields).filter(
+    #         Q(value__icontains=filter_opts) |
+    #         Q(name__icontains=filter_opts) |
+    #         Q(description__icontains=filter_opts)
+    #         ).annotate(
+    #             criticity_num=Case(
+    #                 When(criticity="high", then=Value("1")),
+    #                 When(criticity="medium", then=Value("2")),
+    #                 When(criticity="low", then=Value("3")),
+    #                 default=Value("1"),
+    #                 output_field=CharField())
+    #             ).annotate(cat_list=ArrayAgg('categories__value')).order_by(*sort_options_valid)
+    # else:
+    #     assets_list = Asset.objects.for_user(request.user).filter(**filter_fields).filter(
+    #         Q(value__icontains=filter_opts) |
+    #         Q(name__icontains=filter_opts) |
+    #         Q(description__icontains=filter_opts)
+    #         ).annotate(
+    #             criticity_num=Case(
+    #                 When(criticity="high", then=Value("1")),
+    #                 When(criticity="medium", then=Value("2")),
+    #                 When(criticity="low", then=Value("3")),
+    #                 default=Value("1"),
+    #                 output_field=CharField())
+    #             ).annotate(cat_list=ArrayAgg('categories__value')).order_by(*sort_options_valid)
 
     # Pagination assets
-    nb_rows = request.GET.get('n', 20)
-    if str(nb_rows).isnumeric() is False:
-        nb_rows = 20
+    nb_rows = int(request.GET.get('n', 20))
     assets_paginator = Paginator(assets_list, nb_rows)
     page = request.GET.get('page')
     try:
@@ -122,20 +163,24 @@ def list_assets_view(request):
 
     # List asset groups
     asset_groups = []
+    filters = {}
+    if request.user.id > 1:
+        filters.update({
+            'owner_id': request.user.id
+        })
+
     if teamid_selected >= 0:
-        ags = AssetGroup.objects.for_team(request.user, teamid_selected).prefetch_related('teams', 'categories').all().annotate(
-            asset_list=ArrayAgg('assets__value')
-        ).only(
-            "id", "name", "assets", "criticity",
-            "updated_at", "risk_level", "teams"
-        )
+        ags = AssetGroup.objects.for_team(request.user, teamid_selected).filter(**filters).all().annotate(
+                asset_list=ArrayAgg('assets__value')
+            ).only(
+                "id", "name", "assets", "criticity", "updated_at", "risk_level", "teams"
+            )
     else:
-        ags = AssetGroup.objects.for_user(request.user).prefetch_related('teams', 'categories').all().annotate(
-            asset_list=ArrayAgg('assets__value')
-        ).only(
-            "id", "name", "assets", "criticity",
-            "updated_at", "risk_level", "teams"
-        )
+        ags = AssetGroup.objects.for_user(request.user).filter(**filters).all().annotate(
+                asset_list=ArrayAgg('assets__value')
+            ).only(
+                "id", "name", "assets", "criticity", "updated_at", "risk_level", "teams"
+            )
 
     for asset_group in ags.order_by(Lower("name")):
         assets_names = ""
@@ -155,7 +200,7 @@ def list_assets_view(request):
     tags = assets_list.values_list('categories__value', flat=True).order_by('categories__value').distinct()
     owners = AssetOwner.objects.all()
 
-    return render(request, 'list-assets.html', {
+    return render( request, 'list-assets.html', {
         'assets': assets,
         'asset_groups': asset_groups,
         'teams': teams,
@@ -166,7 +211,6 @@ def list_assets_view(request):
 
 @pro_group_required('AssetsManager')
 def add_asset_view(request):
-    """Add a new asset."""
     form = None
 
     if request.method == 'GET':
@@ -198,7 +242,7 @@ def add_asset_view(request):
                 for cat in form.cleaned_data['categories']:
                     asset.categories.add(cat)
 
-            # Add teams (M2M)
+            # Add teams (M2M) 
             if 'teams' in form.cleaned_data.keys():
                 for team in form.cleaned_data['teams']:
                     asset.teams.add(team)
@@ -237,7 +281,6 @@ def add_asset_view(request):
 
 @pro_group_required('AssetsManager')
 def edit_asset_view(request, asset_id):
-    """Edit an asset."""
     asset = get_object_or_404(Asset.objects.for_user(request.user), id=asset_id)
 
     form = AssetForm(user=request.user)
@@ -280,7 +323,6 @@ def edit_asset_view(request, asset_id):
 
 @pro_group_required('AssetsManager')
 def add_asset_group_view(request):
-    """Add an asset group."""
     form = None
 
     if request.method == 'GET':
@@ -323,13 +365,11 @@ def add_asset_group_view(request):
 
 @pro_group_required('AssetsManager')
 def edit_asset_group_view(request, assetgroup_id):
-    """Edit an asset group."""
-    asset_group = get_object_or_404(AssetGroup.objects.for_user(request.user).prefetch_related('teams', 'assets'), id=assetgroup_id)
+    asset_group = get_object_or_404(AssetGroup.objects.for_user(request.user), id=assetgroup_id)
 
     form = AssetGroupForm(user=request.user)
     if request.method == 'GET':
         form = AssetGroupForm(instance=asset_group, user=request.user)
-        teams_list = request.user.users_team.values('id', 'name').order_by('name')
     elif request.method == 'POST':
         form = AssetGroupForm(request.POST, instance=asset_group, user=request.user)
         if form.is_valid():
@@ -361,16 +401,15 @@ def edit_asset_group_view(request, assetgroup_id):
     return render(request, 'edit-asset-group.html', {
         'form': form,
         'assetgroup_id': assetgroup_id,
-        'asset_group': asset_group,
-        'teams_list': teams_list
+        'asset_group': asset_group
     })
 
 
 def _import_asset_from_csv(request, line, m):
     """Import asset from a CSV file (bulk import)."""
     asset = None
-    if Asset.objects.for_user(request.user).filter(value=line['asset_value']).count() > 0:
-        asset = Asset.objects.for_user(request.user).filter(value=line['asset_value']).first()
+    if Asset.objects.for_user(request.user).filter(value=line['asset_value'],owner_id=request.user.id).count() > 0:
+        asset = Asset.objects.for_user(request.user).filter(value=line['asset_value'],owner_id=request.user.id).first()
         # continue
         m.warning(request, "Asset '{}' already created. Updates are not applied.".format(asset))
     else:
@@ -404,6 +443,7 @@ def _import_asset_from_csv(request, line, m):
     # Add groups
     if 'asset_groupname' in line and line['asset_groupname'] != "":
         # ag = AssetGroup.objects.for_user(request.user).filter(name=str(line['asset_groupname'])).first()
+        raise Exception(line['asset_groupname'])
         ag = AssetGroup.objects.filter(name=str(line['asset_groupname'])).first()
         if ag is None:  # Create new asset group
             asset_args = {
@@ -446,12 +486,8 @@ def bulkadd_asset_view(request):
     form = AssetBulkForm(request.POST, request.FILES)
     # if request.FILES:
     csv_file = request.FILES['file']
-    try:
-        decoded_file = csv_file.read().decode('utf-8-sig').splitlines()
-        records = csv.DictReader(decoded_file, delimiter=';')
-    except Exception:
-        messages.error(request, "Unable to process CSV file '{}'. Check weird chars. No assets imported.".format(asset))
-        return redirect('list_assets_view')
+    decoded_file = csv_file.read().decode('gb2312').splitlines()
+    records = csv.DictReader(decoded_file, delimiter=';')
 
     # Note: Header is skiped automatically
     for line in records:
@@ -465,10 +501,10 @@ def bulkadd_asset_view(request):
     return redirect('list_assets_view')
 
 
+
 # todo: change to asset_id
 @pro_group_required('AssetsManager')
 def evaluate_asset_risk_view(request, asset_name):
-    """Evaluate asset risk metrics."""
     asset = get_object_or_404(Asset.objects.for_user(request.user), value=asset_name)
     data = asset.evaluate_risk()
     return JsonResponse(data, safe=False)
@@ -476,7 +512,6 @@ def evaluate_asset_risk_view(request, asset_name):
 
 @pro_group_required('AssetsManager', 'AssetsViewer')
 def detail_asset_view(request, asset_id):
-    """Return asset details."""
     asset = get_object_or_404(Asset.objects.for_user(request.user), id=asset_id)
     findings = Finding.objects.filter(asset=asset).annotate(
         severity_numm=Case(
@@ -498,10 +533,7 @@ def detail_asset_view(request, asset_id):
 
     findings_stats = {
         'total': 0, 'critical': 0, 'high': 0, 'medium': 0, 'low': 0, 'info': 0,
-        'new': 0, 'ack': 0, 'false-positive': 0, 'duplicate': 0, 'closed': 0,
-        'mitigated': 0, 'reopened': 0,
-        'cvss_gte_7': 0
-    }
+        'new': 0, 'ack': 0, 'cvss_gte_7': 0}
     engines_stats = {}
     references = {}
 
@@ -522,29 +554,18 @@ def detail_asset_view(request, asset_id):
 
     for finding in findings:
         findings_stats['total'] = findings_stats.get('total', 0) + 1
-        if finding.status not in ["false-positive", "duplicate", "closed", "mitigated", "undone", "patched"]:
+        if finding.status not in ["false-positive","duplicate"]:
             findings_stats[finding.severity] = findings_stats.get(finding.severity, 0) + 1
         if finding.status == 'new':
             findings_stats['new'] = findings_stats.get('new', 0) + 1
-        elif finding.status == 'ack':
+        if finding.status == 'ack':
             findings_stats['ack'] = findings_stats.get('ack', 0) + 1
-        elif finding.status == 'duplicate':
-            findings_stats['duplicate'] = findings_stats.get('duplicate', 0) + 1
-        elif finding.status == 'false-positive':
-            findings_stats['false-positive'] = findings_stats.get('false-positive', 0) + 1
-        elif finding.status == 'closed':
-            findings_stats['closed'] = findings_stats.get('closed', 0) + 1
-        elif finding.status == 'mitigated':
-            findings_stats['mitigated'] = findings_stats.get('mitigated', 0) + 1
-        elif finding.status == 'reopened':
-            findings_stats['reopened'] = findings_stats.get('reopened', 0) + 1
-
         for fs in finding.scope_list:
             if fs is not None:
                 c = engine_scopes[fs]
                 engine_scopes[fs].update({
-                    'total': c['total'] + 1,
-                    finding.severity: c[finding.severity] + 1
+                    'total': c['total']+1,
+                    finding.severity: c[finding.severity]+1
                 })
         if finding.engine_type not in engines_stats.keys():
             engines_stats.update({finding.engine_type: 0})
@@ -588,7 +609,7 @@ def detail_asset_view(request, asset_id):
     DEFAULT_LINKS = copy.deepcopy(ASSET_INVESTIGATION_LINKS)
     for i in DEFAULT_LINKS:
         if asset.type in i["datatypes"]:
-            if "link" in i.keys():
+            if "link" in [*i]:
                 i["link"] = i["link"].replace("%asset%", asset.value)
                 investigation_links.append(i)
 
@@ -619,19 +640,20 @@ def detail_asset_view(request, asset_id):
 
 @pro_group_required('AssetsManager', 'AssetsViewer')
 def detail_asset_group_view(request, assetgroup_id):
-    """Return asset group details."""
-    asset_group = get_object_or_404(AssetGroup.objects.for_user(request.user).prefetch_related('categories', 'assets'), id=assetgroup_id)
+    asset_group = get_object_or_404(AssetGroup.objects.for_user(request.user), id=assetgroup_id)
 
-    assets_list = asset_group.assets.all().order_by("-risk_level__grade", "criticity", "type")
+    assets_list = asset_group.assets.all().order_by("-risk_level__grade","criticity","type")
 
     findings = Finding.objects.severity_ordering().filter(
-        asset__in=asset_group.assets.all()
-    ).order_by(
-        '-severity_order', 'asset', 'type', 'updated_at'
-    ).only(
-        "severity", "status", "engine_type", "risk_info", "vuln_refs",
-        "title", "id", "solution", "updated_at", "type", "asset_id",
-        "asset_name")
+            asset__in=asset_group.assets.all()
+        ).annotate(
+            scope_list=ArrayAgg('scopes__name')
+        ).order_by(
+            '-severity_order', 'asset', 'type', 'updated_at'
+        ).only(
+            "severity", "status", "engine_type", "risk_info", "vuln_refs",
+            "title", "id", "solution", "updated_at", "type", "asset_id",
+            "asset_name")
 
     asset_scopes = {}
     for scope in EnginePolicyScope.objects.all():
@@ -649,86 +671,37 @@ def detail_asset_group_view(request, assetgroup_id):
         })
 
     findings_stats = {
-        'total': 0,
-        'critical': 0, 'high': 0, 'medium': 0, 'low': 0, 'info': 0,
-        'new': 0, 'ack': 0
-    }
+        'total': 0, 'critical': 0, 'high': 0, 'medium': 0, 'low': 0, 'info': 0,
+        'new': 0, 'ack': 0}
     engines_stats = {}
 
-    # for finding in findings:
-    #     for fs in finding.scope_list:
-    #         if fs is not None:
-    #             c = asset_scopes[fs]
-    #             asset_scopes[fs].update({'total': c['total']+1, finding.severity: c[finding.severity]+1})
-    #     if finding.engine_type not in engines_stats.keys():
-    #         engines_stats.update({finding.engine_type: 0})
-    #     engines_stats[finding.engine_type] = engines_stats.get(finding.engine_type, 0) + 1
-
-    engines_stats_filter_agg = {}
-    for engine in Engine.objects.values_list('name', flat=True):
-        engines_stats_filter_agg.update({
-            f"engine_{engine}": Count('id', filter=Q(engine_type=engine))
-        })
-
-    engines_scopes_filter_agg = {}
-    # scope_names = EnginePolicyScope.objects.values_list('name', flat=True)
-    # for scope in scope_names:
-    #     engines_scopes_filter_agg.update({
-    #         f"scope_{scope}_total": Count('id', filter=Q(scopes__name=scope)),
-    #         f"scope_{scope}_info": Count('id', filter=Q(scopes__name=scope, severity='info')),
-    #         f"scope_{scope}_low": Count('id', filter=Q(scopes__name=scope, severity='low')),
-    #         f"scope_{scope}_medium": Count('id', filter=Q(scopes__name=scope, severity='medium')),
-    #         f"scope_{scope}_high": Count('id', filter=Q(scopes__name=scope, severity='high')),
-    #         f"scope_{scope}_critical": Count('id', filter=Q(scopes__name=scope, severity='critical')),
-    #     })
-
-    # Sorry...
-    findings_stats = findings.aggregate(
-        nb_new=Count('id', filter=Q(status='new')),
-        nb_ack=Count('id', filter=Q(status='ack')),
-        nb_critical=Count('id', filter=Q(severity='critical')),
-        nb_high=Count('id', filter=Q(severity='high')),
-        nb_medium=Count('id', filter=Q(severity='medium')),
-        nb_low=Count('id', filter=Q(severity='low')),
-        nb_info=Count('id', filter=Q(severity='info')),
-        total=Count('id'),
-        **engines_stats_filter_agg,
-        **engines_scopes_filter_agg
-    )
-
-    # Sorry again...
-    # for scope in scope_names:
-    #     asset_scopes[scope].update({
-    #         'total': findings_stats['scope_'+scope+'_total'],
-    #         'info': findings_stats['scope_'+scope+'_info'],
-    #         'low': findings_stats['scope_'+scope+'_low'],
-    #         'medium': findings_stats['scope_'+scope+'_medium'],
-    #         'high': findings_stats['scope_'+scope+'_high'],
-    #         'critical': findings_stats['scope_'+scope+'_critical'],
-    #     })
+    for finding in findings:
+        findings_stats['total'] = findings_stats.get('total', 0) + 1
+        findings_stats[finding.severity] = findings_stats.get(finding.severity, 0) + 1
+        if finding.status == 'new':
+            findings_stats['new'] = findings_stats.get('new', 0) + 1
+        if finding.status == 'ack':
+            findings_stats['ack'] = findings_stats.get('ack', 0) + 1
+        for fs in finding.scope_list:
+            if fs is not None:
+                c = asset_scopes[fs]
+                asset_scopes[fs].update({'total': c['total']+1, finding.severity: c[finding.severity]+1})
+        if finding.engine_type not in engines_stats.keys():
+            engines_stats.update({finding.engine_type: 0})
+        engines_stats[finding.engine_type] = engines_stats.get(finding.engine_type, 0) + 1
 
     # Scans
-    scan_defs = ScanDefinition.objects.filter(
-        Q(assetgroups_list__in=[asset_group])
-    ).annotate(
-        engine_type_name=F('engine_type__name'),
-        nb_scans=Count('scan')
-    )
-
-    scan_defs_stats = scan_defs.aggregate(
-        nb_periodic=Count('id', filter=Q(scan_type='periodic')),
-        nb_ondemand=Count('id', filter=Q(scan_type='single')),
-        nb_running=Count('id', filter=Q(scan_type='started')),
-    )
-
-    scans = Scan.objects.filter(scan_definition__in=scan_defs)
+    scan_defs = ScanDefinition.objects.filter(Q(assetgroups_list__in=[asset_group])).annotate(engine_type_name=F('engine_type__name'))
+    scans = []
+    for scan_def in scan_defs:
+        scans = scans + list(scan_def.scan_set.all())
 
     scans_stats = {
         'performed': len(scans),
         'defined': len(scan_defs),
-        'periodic': scan_defs_stats['nb_periodic'],
-        'ondemand': scan_defs_stats['nb_ondemand'],
-        'running': scan_defs_stats['nb_running']
+        'periodic': scan_defs.filter(scan_type='periodic').count(),
+        'ondemand': scan_defs.filter(scan_type='single').count(),
+        'running': scan_defs.filter(status='started').count()  # bug: a regrouper par assets
     }
 
     # calculate automatically risk grade
@@ -745,7 +718,7 @@ def detail_asset_group_view(request, assetgroup_id):
     # Pagination assets
     nb_rows = int(request.GET.get('n_assets', 25))
     assets_paginator = Paginator(assets_list, nb_rows)
-    page = request.GET.get('p_assets', 1)
+    page = request.GET.get('p_assets')
     try:
         assets = assets_paginator.page(page)
     except PageNotAnInteger:
@@ -756,7 +729,7 @@ def detail_asset_group_view(request, assetgroup_id):
     # Pagination findings
     nb_rows = int(request.GET.get('n_findings', 50))
     findings_paginator = Paginator(findings, nb_rows)
-    page = request.GET.get('p_findings', 1)
+    page = request.GET.get('p_findings')
     try:
         ag_findings = findings_paginator.page(page)
     except PageNotAnInteger:
@@ -781,7 +754,6 @@ def detail_asset_group_view(request, assetgroup_id):
 # Asset Owners
 @pro_group_required('AssetsManager', 'AssetsViewer')
 def list_asset_owners_view(request):
-    """List asset owners."""
     owners = []
     for owner in AssetOwner.objects.all():
         tmp_owner = model_to_dict(owner)
@@ -795,7 +767,6 @@ def list_asset_owners_view(request):
 
 @pro_group_required('AssetsManager')
 def add_asset_owner_view(request):
-    """Add new asset owner."""
     form = None
     if request.method == 'GET':
         form = AssetOwnerForm(user=request.user)
@@ -822,7 +793,6 @@ def add_asset_owner_view(request):
 
 @pro_group_required('AssetsManager')
 def delete_asset_owner_view(request, asset_owner_id):
-    """Delete asset owner."""
     owner = {}
     if request.method == 'POST':
         owner = get_object_or_404(AssetOwner, id=asset_owner_id)
@@ -834,6 +804,5 @@ def delete_asset_owner_view(request, asset_owner_id):
 
 @pro_group_required('AssetsManager', 'AssetsViewer')
 def details_asset_owner_view(request, asset_owner_id):
-    """Return asset owner details."""
     owner = model_to_dict(get_object_or_404(AssetOwner, id=asset_owner_id))
     return render(request, 'details-asset-owner.html', {'owner': owner})

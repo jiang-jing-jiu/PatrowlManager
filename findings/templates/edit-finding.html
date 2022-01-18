@@ -25,7 +25,7 @@
   {% else %}
   <form action="/findings/edit/{{ finding.id }}" method="post" class="form-horizontal">
   {% endif %}
-    <legend>Edit finding</legend>
+    <legend>编辑发现</legend>
       {% csrf_token %}
       {% for field in form %}
           {% if field.errors %}
@@ -52,10 +52,10 @@
       {% endfor %}
       <div class="form-group submit-div">
         <div class="col-sm-4">
-          <input type="submit" class="btn btn-primary" value="Update Finding">
+          <input type="submit" class="btn btn-primary" value="更新发现">
         </div>
         <div class="col-sm-4">
-          <button class="btn btn-primary"><a href="/findings/list">Cancel</a></button>
+          <button class="btn btn-primary"><a href="/findings/list">取消</a></button>
         </div>
       </div>
   </form>

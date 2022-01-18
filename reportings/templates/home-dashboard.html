@@ -3,8 +3,12 @@
 {% block content %}
 
 <style>
+  body{
+    background: url(/static/images/bg.jpg)
+  }
 .strong {
   font-weight: 700;
+  color: #ffeb7b;
 }
 
 .small {
@@ -24,6 +28,10 @@
   }
 }
 
+  h4{
+    color: #fff;
+  }
+
 @media (min-width: 768px) {
 .col-sm-25 {
     width: 40%;
@@ -37,14 +45,67 @@
 
 .tile {
   /* background: whitesmoke; */
+  background: url(/static/images/line.png) rgba(255, 255, 255, 0.04);
+  height: 100%;
 }
+
 
 .tile-content {
   margin: 0px -5px;
   padding: 15px;
-  background: whitesmoke;
+  /*background: whitesmoke;*/
   height: 100%;
+  position: relative;
 }
+.tile-content::before{
+    position:absolute;
+    top: 0;
+    left: 5px;
+    width: 10px;
+    height: 10px;
+    border-left: 2px solid #02a6b5;
+    border-top: 2px solid #02a6b5;
+    content: "";
+}
+.tile-content::after{
+    position:absolute;
+    top: 0;
+    right: 5px;
+    width: 10px;
+    height: 10px;
+    border-right: 2px solid #02a6b5;
+    border-top: 2px solid #02a6b5;
+    content: "";
+}
+
+.box-footer{
+  position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+
+}
+
+  .box-footer::before{
+    position:absolute;
+    bottom: 0;
+    left: 10px;
+    width: 10px;
+    height: 10px;
+    border-left: 2px solid #02a6b5;
+    border-bottom: 2px solid #02a6b5;
+    content: "";
+    }
+  .box-footer::after{
+      position:absolute;
+      bottom: 0;
+      right: 5px;
+      width: 10px;
+      height: 10px;
+      border-right: 2px solid #02a6b5;
+      border-bottom: 2px solid #02a6b5;
+      content: "";
+  }
 
 .tile-header.with-border {
   border-bottom: 1px solid #ecebeb;
@@ -86,13 +147,32 @@ td.bg-grade-E-low, td.bg-grade-D-medium, td.bg-grade-C-high {background-color: o
 td.bg-grade-F-low, td.bg-grade-E-medium, td.bg-grade-D-high {background-color: red; color: white;}
 td.bg-grade-F-medium, td.bg-grade-E-high {background-color: darkred; color: white;}
 td.bg-grade-F-high {background-color: black; color: white;}
-
+.header{
+  background: url(/static/images/head_bg.png) no-repeat;
+  height: 100px;
+  background-size: 100% 100%;
+}
+td,th{
+  color: rgba(255, 255, 255, 0.7);
+}
+small{
+   color: rgba(255, 255, 255, 0.7);
+}
+  dt{
+    color: rgba(255, 255, 255, 0.7);
+  }
+  
+  .table-hover>tbody>tr:hover {
+    background-color: rgba(47, 72, 156, 1);
+}
 </style>
 
-<ul class="breadcrumb" style="margin-bottom: 0px;">
-  <li><a href="{% url 'homepage_dashboard_view' %}">Global dashboard</a></li>
+<ul class="breadcrumb header" style="margin-bottom: 0px;">
+  <li style="display: block;text-align: center;"><a
+          href="{% url 'homepage_dashboard_view' %}"
+          style="font-size: 38px;text-decoration: none;">全局仪表盘</a></li>
   {% if PRO_EDITION %}
-  <li class="active">
+  <li class="active" style="display:none;">
     Team:
     <select id="team_select" class="form-control form-control-xs" style="width:auto; display:inline-block; padding:0;">
       <option value="-1" selected>All</option>
@@ -107,35 +187,48 @@ td.bg-grade-F-high {background-color: black; color: white;}
 <div class="container-fluid">
   <!-- 1st row -->
   <div class="row equal">
-    <div class="tile col-sm-15" ondblclick="window.location='{% url 'list_assets_view' %}'">
+    <div class="col-sm-15">
+    <div class="tile " ondblclick="window.location='{% url 'list_assets_view' %}'">
       <div class="tile-content">
         <h2 class="text-center strong">{{global_stats.assets.total}}</h2>
-        <h6 class="text-muted text-center">Assets defined</h6>
+        <h6 class="text-muted text-center">资产定义</h6>
         <small>
           {% for type in global_stats.asset_types %}
           <span class="badge badge-secondary small">{{type}}: {{ global_stats.asset_types|keyvalue:type}}</span>
           {% endfor %}
         </small>
       </div>
+      <div class="box-footer"></div>
+      </div>
+
     </div>
-    <div class="tile col-sm-15" ondblclick="window.location='/findings/list'">
+
+    <div class="col-sm-15">
+    <div class="tile" ondblclick="window.location='/findings/list'">
       <div class="tile-content">
         <h2 class="text-center strong">{{global_stats.findings.new}}</h2>
-        <h6 class="text-muted text-center">New findings</h6>
-        <small>Unique findings: {{global_stats.findings.total}}</small><br/>
+        <h6 class="text-muted text-center">新发现</h6>
+        <small>独特的发现: {{global_stats.findings.total}}</small><br/>
         <!-- <small>All findings: {{global_stats.findings.total_raw}}</small><br/> -->
       </div>
+       <div class="box-footer"></div>
     </div>
-    <div class="tile col-sm-15" ondblclick="window.location='/scans/list'">
+
+   </div>
+
+<div class="col-sm-15">
+    <div class="tile " ondblclick="window.location='/scans/list'">
       <div class="tile-content">
         <h2 class="text-center strong">{{global_stats.scans.running}}</h2>
-        <h6 class="text-muted text-center">Running scans</h6>
-        <small>Active Periodic: {{global_stats.scans.active_periodic}}</small><br/>
-        <small>Enqueued: {{global_stats.scans.running}}</small><br/>
-        <small>Performed: {{global_stats.scans.performed}}</small><br/>
-        <small>Defined: {{global_stats.scans.defined}}</small>
+        <h6 class="text-muted text-center">运行扫描</h6>
+        <small>活动周期: {{global_stats.scans.active_periodic}}</small><br/>
+        <small>排队: {{global_stats.scans.running}}</small><br/>
+        <small>执行: {{global_stats.scans.performed}}</small><br/>
+        <small>定义: {{global_stats.scans.defined}}</small>
       </div>
+       <div class="box-footer"></div>
     </div>
+</div>
     <!-- <div class="tile col-sm-15" ondblclick="window.location='/rules/list'">
       <div class="tile-content">
         <h2 class="text-center strong">{{global_stats.rules.active}}</h2>
@@ -144,44 +237,51 @@ td.bg-grade-F-high {background-color: black; color: white;}
         <small>Notified: {{global_stats.rules.nb_matches}}</small><br/>
       </div>
     </div> -->
-    <div class="tile col-sm-15" ondblclick="window.location='/events/alerts/list'">
+    <div class="col-sm-15">
+    <div class="tile " ondblclick="window.location='/events/alerts/list'">
       <div class="tile-content">
         <h2 class="text-center strong">{{global_stats.alerts.total_new}}</h2>
-        <h6 class="text-muted text-center">New alerts</h6>
-        <span class="badge badge-secondary small">info: {{ global_stats.alerts.new_info}}</span>
-        <span class="badge badge-secondary small">low: {{ global_stats.alerts.new_low}}</span>
-        <span class="badge badge-secondary small">medium: {{ global_stats.alerts.new_medium}}</span>
-        <span class="badge badge-secondary small">high: {{ global_stats.alerts.new_high}}</span>
-        <span class="badge badge-secondary small">critical: {{ global_stats.alerts.new_critical}}</span>
+        <h6 class="text-muted text-center">新警报</h6>
+        <span class="badge badge-secondary small">信息: {{ global_stats.alerts.new_info}}</span>
+        <span class="badge badge-secondary small">低: {{ global_stats.alerts.new_low}}</span>
+        <span class="badge badge-secondary small">中等: {{ global_stats.alerts.new_medium}}</span>
+        <span class="badge badge-secondary small">高: {{ global_stats.alerts.new_high}}</span>
+        <span class="badge badge-secondary small">关键: {{ global_stats.alerts.new_critical}}</span>
       </div>
+       <div class="box-footer"></div>
     </div>
-    <div class="tile col-sm-15" ondblclick="window.location='/engines/list'">
+    </div>
+      <div class="col-sm-15">
+    <div class="tile" ondblclick="window.location='/engines/list'">
       <div class="tile-content">
         <h2 class="text-center strong">{{global_stats.engines.active}}</h2>
-        <h6 class="text-muted text-center">Active engines</h6>
-        <small>Total engines: {{global_stats.engines.total}}</small><br/>
-        <small>Total policies: {{global_stats.engines.policies}}</small><br/>
+        <h6 class="text-muted text-center">活动引擎</h6>
+        <small>引擎总数: {{global_stats.engines.total}}</small><br/>
+        <small>策略总数: {{global_stats.engines.policies}}</small><br/>
       </div>
+       <div class="box-footer"></div>
     </div>
+  </div>
   </div>
   <!-- End 1st row -->
   <!-- 2nd row -->
   <div class="row equal">
-    <div class="tile col-sm-15">
+    <div class="col-sm-15">
+        <div class="tile ">
       <div class="tile-content">
         <div class="tile-header with-border">
-          <h4>Asset grades</h4>
+          <h4>资产等级</h4>
         </div>
         <div class="tile-body">
           <table style="text-align: center; font-size: small;">
             <tr>
-              <th rowspan="2" style="text-align: center;">Grade</th>
-              <th colspan="3" style="text-align: center;">Criticality</th>
+              <th rowspan="2" style="text-align: center;">等级</th>
+              <th colspan="3" style="text-align: center;">危急程度</th>
             </tr>
             <tr>
-              <th style="text-align: center; font-weight: lighter;">Low</th>
-              <th style="text-align: center; font-weight: lighter;">Medium</th>
-              <th style="text-align: center; font-weight: lighter;">High</th>
+              <th style="text-align: center; font-weight: lighter;">低的</th>
+              <th style="text-align: center; font-weight: lighter;">中等的</th>
+              <th style="text-align: center; font-weight: lighter;">高的</th>
             </tr>
             {% for grades in asset_grades_map %}
              {% for grade, value in grades.items %}
@@ -196,19 +296,23 @@ td.bg-grade-F-high {background-color: black; color: white;}
           </table>
         </div>
       </div>
+            <div class="box-footer"></div>
     </div>
-    <div class="tile col-sm-15">
+    </div>
+
+    <div class="col-sm-15">
+      <div class="tile">
       <div class="tile-content">
         <div class="tile-header with-border">
-          <h4>Most critical assets</h4>
+          <h4>最关键的资产</h4>
         </div>
         <div class="tile-body">
           <table class="table table-hover table-tile">
             <thead>
               <tr>
-                <th scope="col">Grade</th>
-                <th scope="col">Value</th>
-                <th scope="col">Score</th>
+                <th>等级</th>
+                <th>价值</th>
+                <th>分数</th>
               </tr>
             </thead>
             <tbody>
@@ -223,11 +327,15 @@ td.bg-grade-F-high {background-color: black; color: white;}
           </table>
         </div>
       </div>
+        <div class="box-footer"></div>
+
     </div>
-    <div class="tile col-sm-15">
+    </div>
+    <div class="col-sm-15">
+    <div class="tile">
       <div class="tile-content">
         <div class="tile-header with-border">
-          <h4>Findings by criticities</h4>
+          <h4>扫描结果扇形图</h4>
         </div>
         <div class="tile-body">
           <div id="findings-by-criticities">
@@ -236,33 +344,37 @@ td.bg-grade-F-high {background-color: black; color: white;}
         </div>
       </div>
     </div>
-    <div class="tile col-sm-25">
+      <div class="box-footer"></div>
+      </div>
+
+<div class="col-sm-25">
+    <div class="tile">
       <div class="tile-content">
         <div class="tile-header with-border">
-          <h4>Most critical findings</h4>
+          <h4>最重要的发现</h4>
         </div>
         <div class="tile-body">
           <table class="table table-hover table-tile">
             <thead>
               <tr>
-                <th scope="col">Severity</th>
-                <th scope="col">Title</th>
-                <th scope="col">Asset</th>
+                <th>严重性</th>
+                <th>标题</th>
+                <th>资产</th>
               </tr>
             </thead>
             <tbody>
               {% for finding in top_critical_findings %}
               <tr class='dblclickable-row' data-href='/findings/details/{{finding.id}}'>
                 {% if finding.severity == 'critical' %}
-                <td><span class="label label-critical">{{ finding.severity }}</span></td>
+                <td><span class="label label-critical">严重的</span></td>
                 {% elif finding.severity == 'high' %}
-                <td><span class="label label-high">{{ finding.severity }}</span></td>
+                <td><span class="label label-high">高风险的</span></td>
                 {% elif finding.severity == 'medium' or finding.severity == 'moderate' %}
-                <td><span class="label label-medium">{{ finding.severity }}</span></td>
+                <td><span class="label label-medium">中等的</span></td>
                 {% elif finding.severity == 'low' %}
-                <td><span class="label label-low">{{ finding.severity }}</span></td>
+                <td><span class="label label-low">低风险的</span></td>
                 {% else %}
-                <td><span class="label label-info">{{ finding.severity }}</span></td>
+                <td><span class="label label-info">提示信息</span></td>
                 {% endif %}
                 <td>{{finding.title|truncatechars:40}}</td>
                 <td>{{finding.asset_name|truncatechars:30}}</td>
@@ -272,26 +384,32 @@ td.bg-grade-F-high {background-color: black; color: white;}
           </table>
         </div>
       </div>
+        <div class="box-footer"></div>
     </div>
+</div>
+
+
+
   </div>
   <!-- End 2nd row -->
   <!-- 3rd row -->
   <div class="row equal">
-    <div class="tile col-sm-15">
+    <div class="col-sm-15">
+        <div class="tile">
       <div class="tile-content">
         <div class="tile-header with-border">
-          <h4>Asset group grades</h4>
+          <h4>资产组等级</h4>
         </div>
         <div class="tile-body">
           <table style="text-align: center; font-size: small;">
             <tr>
-              <th rowspan="2" style="text-align: center;">Grade</th>
-              <th colspan="3" style="text-align: center;">Criticality</th>
+              <th rowspan="2" style="text-align: center;">等级</th>
+              <th colspan="3" style="text-align: center;">危急程度</th>
             </tr>
             <tr>
-              <th style="text-align: center; font-weight: lighter;">Low</th>
-              <th style="text-align: center; font-weight: lighter;">Medium</th>
-              <th style="text-align: center; font-weight: lighter;">High</th>
+              <th style="text-align: center; font-weight: lighter;">低的</th>
+              <th style="text-align: center; font-weight: lighter;">中等的</th>
+              <th style="text-align: center; font-weight: lighter;">高的</th>
             </tr>
             {% for grades in assetgroup_grades_map %}
              {% for grade, value in grades.items %}
@@ -306,47 +424,53 @@ td.bg-grade-F-high {background-color: black; color: white;}
           </table>
         </div>
       </div>
+          <div class="box-footer"></div>
     </div>
-    <div class="tile col-sm-15">
+    </div>
+     <div class="col-sm-15">
+        <div class="tile">
+          <div class="tile-content">
+            <div class="tile-header with-border">
+              <h4>最关键的资产组</h4>
+            </div>
+            <div class="tile-body">
+              <table class="table table-hover table-tile">
+                <thead>
+                  <tr>
+                    <th>等级</th>
+                    <th>名称</th>
+                    <th>分数</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for assetgroup in top_critical_assetgroups %}
+                  <tr class='dblclickable-row' data-href='/assets/groups/details/{{assetgroup.id}}'>
+                    <td><span class="badge badge-risk-grade-{{assetgroup.risk_level|keyvalue:'grade'}}">{{assetgroup.risk_level|keyvalue:"grade"}}</span></td>
+                    <td>{{assetgroup.name}}</td>
+                    <td>{{assetgroup|risk_score}}</td>
+                  </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+          </div>
+            <div class="box-footer"></div>
+        </div>
+     </div>
+    <div class="col-sm-35">
+    <div class="tile ">
       <div class="tile-content">
         <div class="tile-header with-border">
-          <h4>Most critical asset groups</h4>
+          <h4>上次扫描</h4>
         </div>
         <div class="tile-body">
           <table class="table table-hover table-tile">
             <thead>
               <tr>
-                <th scope="col">Grade</th>
-                <th scope="col">Name</th>
-                <th scope="col">Score</th>
-              </tr>
-            </thead>
-            <tbody>
-              {% for assetgroup in top_critical_assetgroups %}
-              <tr class='dblclickable-row' data-href='/assets/groups/details/{{assetgroup.id}}'>
-                <td><span class="badge badge-risk-grade-{{assetgroup.risk_level|keyvalue:'grade'}}">{{assetgroup.risk_level|keyvalue:"grade"}}</span></td>
-                <td>{{assetgroup.name}}</td>
-                <td>{{assetgroup|risk_score}}</td>
-              </tr>
-              {% endfor %}
-            </tbody>
-          </table>
-        </div>
-      </div>
-    </div>
-    <div class="tile col-sm-35">
-      <div class="tile-content">
-        <div class="tile-header with-border">
-          <h4>Last scans</h4>
-        </div>
-        <div class="tile-body">
-          <table class="table table-hover table-tile">
-            <thead>
-              <tr>
-                <th class="col-sm-4">Title</th>
-                <th class="col-sm-2">Findings</th>
-                <th class="col-sm-1">Status</th>
-                <th class="col-sm-2">Date</th>
+                <th class="col-sm-4">标题</th>
+                <th class="col-sm-2">发现</th>
+                <th class="col-sm-1">状态</th>
+                <th class="col-sm-2">日期</th>
               </tr>
             </thead>
             <tbody>
@@ -383,11 +507,11 @@ td.bg-grade-F-high {background-color: black; color: white;}
                 </td>
                 <td class="text-center">
                   {% if scan.status == "finished" %}
-                  <span class="label label-success">Finished</span>
+                  <span class="label label-success">结束</span>
                   {% elif scan.status == "started" %}
-                  <span class="label label-warning">Started</span>
+                  <span class="label label-warning">开始</span>
                   {% elif scan.status == "error" %}
-                  <span class="label label-danger">Error</span>
+                  <span class="label label-danger">错误</span>
                   {% else %}
                   <span class="label label-primary">{{scan.status|capfirst}}</span>
                   {% endif %}
@@ -399,14 +523,18 @@ td.bg-grade-F-high {background-color: black; color: white;}
           </table>
         </div>
       </div>
+      <div class="box-footer"></div>
     </div>
+      </div>
   </div>
   <!-- End 3rd row -->
   <div class="row equal">
-    <div class="tile col-sm-15">
+
+    <div class="col-sm-15">
+    <div class="tile">
       <div class="tile-content">
         <div class="tile-header with-border">
-          <h4>Top CVSS Score / Findings</h4>
+          <h4>最高 CVSS 分数/调查结果</h4>
         </div>
         <div class="tile-body">
           <dl class="dl-horizontal">
@@ -418,11 +546,14 @@ td.bg-grade-F-high {background-color: black; color: white;}
           </dl>
         </div>
       </div>
+         <div class="box-footer"></div>
     </div>
-    <div class="tile col-sm-25">
+      </div>
+    <div class="col-sm-15">
+      <div class="tile">
       <div class="tile-content">
         <div class="tile-header with-border">
-          <h4>Top CVE</h4>
+          <h4>顶级 CVE</h4>
         </div>
         <div class="tile-body">
           {% for cve in cxe_stats.top_cve %}
@@ -430,11 +561,14 @@ td.bg-grade-F-high {background-color: black; color: white;}
           {% endfor %}
         </div>
       </div>
+        <div class="box-footer"></div>
     </div>
-    <div class="tile col-sm-25">
+    </div>
+    <div class="col-sm-25">
+    <div class="tile ">
       <div class="tile-content">
         <div class="tile-header with-border">
-          <h4>Top CWE</h4>
+          <h4>顶级CWE</h4>
         </div>
         <div class="tile-body">
           {% for cwe in cxe_stats.top_cwe %}
@@ -443,7 +577,9 @@ td.bg-grade-F-high {background-color: black; color: white;}
           {% endfor %}
         </div>
       </div>
+      <div class="box-footer"></div>
     </div>
+      </div>
   </div>
   <!-- End 4th row -->
 
@@ -465,7 +601,7 @@ td.bg-grade-F-high {background-color: black; color: white;}
                   "#3498db"
               ],
           }],
-          labels: ["Critical", "High", "Medium", "Low", "Info"]
+          labels: ["严重的", "高风险的", "中等的", "低风险的", "提示信息"]
       },
       options: {
         responsive: false,

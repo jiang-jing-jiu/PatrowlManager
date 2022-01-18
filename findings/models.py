@@ -12,8 +12,6 @@ from django.forms.models import model_to_dict
 
 from rules.models import Rule
 from common.utils.encoding import json_serial
-from assets.models import Asset
-from assets.utils import _add_new_asset
 
 import json
 import uuid
@@ -25,20 +23,19 @@ FINDING_SEVERITIES = (
     ('low', 'low'),
     ('medium', 'medium'),
     ('high', 'high'),
-    ('critical', 'critical'),
+    ('critical', 'critical')
 )
 
 FINDING_STATUS = (
     ('new', 'New'),
     ('ack', 'Acknowledged'),
-    ('confirmed', 'Confirmed'),
     ('mitigated', 'Mitigated'),
+    ('confirmed', 'Confirmed'),
     ('patched', 'Patched'),
     ('closed', 'Closed'),
     ('false-positive', 'False-Positive'),
     ('undone', 'Undone'),
-    ('duplicate', 'Duplicate'),
-    ('reopened', 'Reopened'),
+    ('duplicate', 'Duplicate')
 )
 
 
@@ -95,6 +92,7 @@ class RawFinding(models.Model):
     asset_name  = models.CharField(max_length=256)
     task_id     = models.UUIDField(default=uuid.uuid4, editable=True)
     scan        = models.ForeignKey('scans.Scan', on_delete=models.CASCADE)
+    # owner       = models.ForeignKey(get_user_model(), on_delete=models.DO_NOTHING, null=True, blank=True)
     owner       = models.ForeignKey(get_user_model(), on_delete=models.SET_NULL, null=True, blank=True)
     title       = models.CharField(max_length=256)
     type        = models.CharField(max_length=50)
@@ -155,46 +153,43 @@ class RawFinding(models.Model):
             self.updated_at = timezone.now()
         return super(RawFinding, self).save(*args, **kwargs)
 
-    # def evaluate_alert_rules(self, trigger='all'):
-    #     # print("RF-evaluate_alert_rules")
-    #     if trigger == "all":
-    #         rules = Rule.objects.filter(enabled=True, scope__in=['finding', 'asset', 'scan'])
-    #     else:
-    #         rules = Rule.objects.filter(enabled=True, scope__in=['finding', 'asset', 'scan'], trigger=trigger)
-    #     nb_matches = 0
-    #     for rule in rules.exclude(target='alert'):
-    #         rck, rcv = list(rule.condition.items())[0]
-    #         kwargs = {
-    #             "id": self.id,
-    #             rule.scope_attr + rck: rcv
-    #         }
-    #         if RawFinding.objects.filter(**kwargs):
-    #             nb_matches += 1
-    #             rule.notify(message="[Asset={}] {}".format(self.asset.value, self.title), asset=self.asset, description=self.description)
-    #     for rule in rules.filter(target='alert'):
-    #         rck, rcv = list(rule.condition.items())[0]
-    #         field = ""
-    #         if rule.scope == "asset":
-    #             field = "asset__"
-    #         elif rule.scope == "scan":
-    #             field = "scan__"
-    #         kwargs = {
-    #             "id": self.id,
-    #             field + rule.scope_attr + rck: rcv
-    #         }
-    #         for rf in RawFinding.objects.filter(**kwargs):
-    #             nb_matches += 1
-    #             rule.notify(message="[Rule={}]".format(rule.title), asset=self.asset, description=self.description, finding=rf)
-    #     return nb_matches
+    def evaluate_alert_rules(self, trigger='all'):
+        if trigger == "all":
+            rules = Rule.objects.filter(enabled=True, scope='finding')
+        else:
+            rules = Rule.objects.filter(enabled=True, scope='finding', trigger=trigger)
+        nb_matches = 0
+        for rule in rules.exclude(target='alert'):
+            rck, rcv = list(rule.condition.items())[0]
+            kwargs = {
+                "id": self.id,
+                # rule.scope_attr + next(iter(rule.condition)): rule.condition.itervalues().next()
+                rule.scope_attr + rck: rcv
+            }
+            if RawFinding.objects.filter(**kwargs):
+                nb_matches += 1
+                rule.notify(message="[Asset={}] {}".format(self.asset.value, self.title), asset=self.asset, description=self.description)
+        for rule in rules.filter(target='alert'):
+            rck, rcv = list(rule.condition.items())[0]
+            kwargs = {
+                "id": self.id,
+                rule.scope_attr + rck: rcv
+            }
+            for rf in RawFinding.objects.filter(**kwargs):
+                nb_matches += 1
+                rule.notify(message="[Rule={}]".format(rule.title), asset=self.asset, description=self.description, finding=rf)
+        return nb_matches
 
 
 @receiver(post_save, sender=RawFinding)
 def rawfinding_create_update_log(sender, **kwargs):
     from events.models import Event
     if kwargs['created']:
-        Event.objects.create(message="[RawFinding] New raw finding created (id={}): {}".format(kwargs['instance'].id, kwargs['instance']), type="CREATE", severity="DEBUG")
+        Event.objects.create(message="[RawFinding] New raw finding created (id={}): {}".format(kwargs['instance'].id, kwargs['instance']),
+                             type="CREATE", severity="DEBUG")
     else:
-        Event.objects.create(message="[RawFinding] Raw finding '{}' modified (id={})".format(kwargs['instance'], kwargs['instance'].id), type="UPDATE", severity="DEBUG")
+        Event.objects.create(message="[RawFinding] Raw finding '{}' modified (id={})".format(kwargs['instance'], kwargs['instance'].id),
+                             type="UPDATE", severity="DEBUG")
 
 
 @receiver(post_delete, sender=RawFinding)
@@ -206,30 +201,31 @@ def rawfinding_delete_log(sender, **kwargs):
 
 class Finding(models.Model):
     raw_finding = models.ForeignKey(RawFinding, models.SET_NULL, blank=True, null=True)
-    asset       = models.ForeignKey('assets.Asset', on_delete=models.CASCADE)
+    asset       = models.ForeignKey('assets.Asset', on_delete=models.CASCADE,verbose_name="资产")
     asset_name  = models.CharField(max_length=256) #todo: delete this
     task_id     = models.UUIDField(default=uuid.uuid4, editable=True)
     scan        = models.ForeignKey('scans.Scan', on_delete=models.CASCADE, blank=True, null=True)
+    # owner       = models.ForeignKey(get_user_model(), on_delete=models.DO_NOTHING, null=True, blank=True)
     owner       = models.ForeignKey(get_user_model(), on_delete=models.SET_NULL, null=True, blank=True)
-    title       = models.CharField(max_length=256, default='title')
-    type        = models.CharField(max_length=50)
+    title       = models.CharField(max_length=256, default='title',verbose_name="标题")
+    type        = models.CharField(max_length=50,verbose_name="类型")
     hash        = models.CharField(max_length=256)
     confidence  = models.CharField(max_length=10)
-    severity    = models.CharField(choices=FINDING_SEVERITIES, default='info', max_length=10)  # info, low, medium, high, critical
+    severity    = models.CharField(verbose_name="严重程度",choices=FINDING_SEVERITIES, default='info', max_length=10)  # info, low, medium, high, critical
     severity_num= models.IntegerField(default=1, blank=True, null=True)  # info, low, medium, high, critical
     scopes      = models.ManyToManyField('engines.EnginePolicyScope', blank=True, related_name='finding_scopes')
-    description = models.TextField()
-    solution    = models.TextField(null=True, blank=True)
+    description = models.TextField(verbose_name="描述")
+    solution    = models.TextField(null=True, blank=True,verbose_name="解决方案")
     score       = models.IntegerField(default=0, null=True, blank=True)
     raw_data    = JSONField(null=True, blank=True)
-    risk_info   = JSONField(null=True, blank=True)
-    vuln_refs   = JSONField(null=True, blank=True)
-    links       = JSONField(null=True, blank=True)
-    tags        = JSONField(null=True, blank=True)
-    status      = models.CharField(choices=FINDING_STATUS, max_length=16, default='new')
+    risk_info   = JSONField(null=True, blank=True,verbose_name="风险信息")
+    vuln_refs   = JSONField(null=True, blank=True,verbose_name="Vuln参考")
+    links       = JSONField(null=True, blank=True,verbose_name="链接")
+    tags        = JSONField(null=True, blank=True,verbose_name="标签")
+    status      = models.CharField(choices=FINDING_STATUS, max_length=16, default='new',verbose_name="状态")
     engine_type = models.CharField(max_length=20)
     found_at    = models.DateTimeField(default=timezone.now)
-    comments    = models.TextField(default="n/a", null=True, blank=True)
+    comments    = models.TextField(default="n/a", null=True, blank=True,verbose_name="评论")
     checked_at  = models.DateTimeField(default=timezone.now)
     created_at  = models.DateTimeField(default=timezone.now)
     updated_at  = models.DateTimeField(default=timezone.now)
@@ -252,6 +248,7 @@ class Finding(models.Model):
         return (self.severity, self.confidence)
 
     def save(self, apply_overrides=False, *args, **kwargs):
+        # print("finding.save()", "args:", args, "kwargs:", kwargs, "apply_overrides:", apply_overrides)
         self.hash = hashlib.sha1(str(self.asset_name).encode('utf-8')+str(self.title).encode('utf-8')).hexdigest()
         if self.severity == "info":
             self.severity_num = 1
@@ -274,72 +271,21 @@ class Finding(models.Model):
             self.updated_at = timezone.now()
         return super(Finding, self).save(*args, **kwargs)
 
-    def evaluate_assets(self):
-        """Create assets by analysing results."""
-        # print("evaluate_assets", settings.ASSET_DETECTION_RULES)
-        rules = settings.ASSET_DETECTION_RULES
-        new_assets = []
-        # new_assets_tmp = []
-        matches = []
-        for rule in rules:
-            rule_query = Q()
-            for rule_filter in rule['filters']:
-                print(rule_filter)
-                rule_filter.update({'id': self.id, 'asset__type__in': rule['allowed_datatypes']})
-                rule_query = rule_query | Q(**rule_filter)
-
-            matches = Finding.objects.filter(rule_query).first()
-
-            if matches is not None:
-                asset_value = rule['output_pattern'].replace('__asset__', self.asset_name)
-                print("asset_value:", asset_value)
-
-                # Check if the asset is already created
-                if Asset.objects.filter(value=asset_value).only('id').first() is None:
-                    # print(asset_value)
-                    tmp_asset = {
-                        "datatype": rule['datatype'],
-                        "rule_name": rule['name'],
-                        "group_name": rule['group_name'],
-                        "asset_value": asset_value,
-                        "original_asset_value": self.asset.value,
-                        "asset_teams": self.asset.teams.all(),
-                        "owner": self.owner,
-                    }
-                    print(tmp_asset)
-                    tmp_asset_id = _add_new_asset(tmp_asset)
-                    new_assets.append(tmp_asset_id)
-        return list(set(new_assets))
-
     def evaluate_alert_rules(self, trigger='all'):
         if trigger == "all":
-            rules = Rule.objects.filter(enabled=True, scope__in=['finding', 'asset', 'scan'])
+            rules = Rule.objects.filter(enabled=True, scope='finding')
         else:
-            rules = Rule.objects.filter(enabled=True, scope__in=['finding', 'asset', 'scan'], trigger=trigger)
+            rules = Rule.objects.filter(enabled=True, scope='finding', trigger=trigger)
         nb_matches = 0
-        for rule in rules.exclude(target='alert'):
-            rck, rcv = list(rule.condition.items())[0]
+        for rule in rules:
             kwargs = {
                 "id": self.id,
-                rule.scope_attr + rck: rcv
+                # rule.scope_attr+next(iter(rule.condition)): rule.condition.itervalues().next()
+                rule.scope_attr+next(iter(rule.condition)): next(iter(rule.condition.values()))
             }
             if Finding.objects.filter(**kwargs):
                 nb_matches += 1
                 rule.notify(message="[Asset={}] {}".format(self.asset.value, self.title), asset=self.asset, description=self.description)
-        for rule in rules.filter(target='alert'):
-            rck, rcv = list(rule.condition.items())[0]
-            field = ""
-            if rule.scope == "asset":
-                field = "asset__"
-            elif rule.scope == "scan":
-                field = "scan__"
-            kwargs = {
-                "id": self.id,
-                field + rule.scope_attr + rck: rcv
-            }
-            for rf in Finding.objects.filter(**kwargs):
-                nb_matches += 1
-                rule.notify(message="[Rule={}]".format(rule.title), asset=self.asset, description=self.description, finding=rf)
         return nb_matches
 
 
@@ -363,7 +309,7 @@ def finding_delete_log(sender, **kwargs):
     asset.calc_risk_grade()
 
     Event.objects.create(message="[Finding] Finding '{}' deleted (id={})".format(kwargs['instance'], kwargs['instance'].id),
-        type="DELETE", severity="DEBUG")
+                 type="DELETE", severity="DEBUG")
 
 
 FINDING_OVERRIDE_ACTIONS = (

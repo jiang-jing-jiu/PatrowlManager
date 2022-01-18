@@ -2,13 +2,13 @@
 {% block content %}
 
 <ul class="breadcrumb">
-  <li><a href="{% url 'list_assets_view' %}">assets</a></li>
-  <li class="active">add new asset manually [<a href="{% url 'list_assets_view' %}">back</a>]</li>
+  <li><a href="{% url 'list_assets_view' %}">资产</a></li>
+  <li class="active">添加资产 [<a href="{% url 'list_assets_view' %}">返回</a>]</li>
 </ul>
 
 <div class="container">
   <form action="{% url 'add_asset_view' %}" method="post" class="form-horizontal">
-    <legend>Add an asset</legend>
+    <legend>添加新资产</legend>
       {% csrf_token %}
       {% for field in form %}
           {% if field.errors %}
@@ -33,11 +33,12 @@
               </div>
           {% endif %}
       {% endfor %}
+
       <div class="form-group submit-div">
         <div class="col-sm-2">
         </div>
         <div class="col-sm-4">
-          <button type="submit" class="btn btn-warning col-sm-12">Create a new asset</button>
+          <button type="submit" class="btn btn-warning col-sm-12">创建新资产</button>
         </div>
       </div>
   </form>
@@ -47,10 +48,12 @@
 {% if messages %}
 <ul class="messages">
     {% for message in messages %}
-    <li {% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message }}</li>
+    <li{% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message }}</li>
     {% endfor %}
 </ul>
 {% endif %}
 </div>
-
+    <script>
+   $('#id_teams').parent().parent().css('display','none')
+    </script>
 {% endblock %}

@@ -2,13 +2,13 @@
 {% block content %}
 
 <ul class="breadcrumb">
-  <li><a href="/engines/list">engines</a></li>
-  <li class="active">add new scan engine</li>
+  <li><a href="/engines/list">引擎</a></li>
+  <li class="active">添加引擎</li>
 </ul>
 
 <div class="container">
   <form action="/engines/add" method="post" class="form-horizontal">
-    <legend>Add a new scan engine</legend>
+    <legend>添加新的扫描引擎</legend>
       {% csrf_token %}
       {% for field in form %}
           {% if field.errors %}
@@ -37,7 +37,7 @@
         <div class="col-sm-2">
         </div>
         <div class="col-sm-4">
-          <button type="submit" class="btn btn-warning col-sm-12">Create a new engine</button>
+          <button type="submit" class="btn btn-warning col-sm-12">创建新引擎</button>
         </div>
       </div>
 

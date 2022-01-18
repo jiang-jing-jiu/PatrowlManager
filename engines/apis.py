@@ -211,7 +211,17 @@ def toggle_autorefresh_engine_status_api(request):
 @pro_group_required('EnginesManager', 'EnginesViewer')
 def list_engines_intances_api(requests):
     engines = []
-    for engine in EngineInstance.objects.all().order_by("name"):
+    # 2021.11.28 权限增加
+    filters = {}
+    EngineInstanceFilters = {}
+    if requests.user.id > 1:
+        filters.update({
+            'owner_id': requests.user.id
+        })
+        EngineInstanceFilters.update({
+            'user_id': requests.user.id
+        })
+    for engine in EngineInstance.objects.filter(**EngineInstanceFilters).all().order_by("name"):
         engines.append({
             "id": engine.id,
             "name": engine.name,
@@ -222,8 +232,8 @@ def list_engines_intances_api(requests):
            })
     return JsonResponse({
             "engines": engines,
-            "running_scans": Scan.objects.filter(status="started").count(),
-            "enqueued_scans": Scan.objects.filter(status="enqueued").count()
+            "running_scans": Scan.objects.filter(status="started").filter(**filters).count(),
+            "enqueued_scans": Scan.objects.filter(status="enqueued").filter(**filters).count()
         }, safe=False)
 
 

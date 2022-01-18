@@ -2,14 +2,14 @@
 {% block content %}
 
 <ul class="breadcrumb">
-  <li><a href="/engines/list">engines</a></li>
-  <li><a href="/engines/policies/list">policies</a></li>
-  <li class="active">edit engine policy</li>
+  <li><a href="/engines/list">引擎</a></li>
+  <li><a href="/engines/policies/list">策略</a></li>
+  <li class="active">编辑策略</li>
 </ul>
 
 <div class="container">
   <form action="/engines/policies/edit/{{ policy_id }}" method="post" class="form-horizontal" enctype="multipart/form-data">
-    <legend>Edit an engine policy</legend>
+    <legend>编辑策略</legend>
       {% csrf_token %}
       {% for field in form %}
           {% if field.errors %}
@@ -38,14 +38,14 @@
         <div class="col-sm-2">
         </div>
         <div class="col-sm-4">
-          <button type="submit" class="btn btn-warning col-sm-12">Update policy</button>
+          <button type="submit" class="btn btn-warning col-sm-12">更新策略</button>
         </div>
       </div>
   </form>
   {% if messages %}
   <ul class="messages">
       {% for message in messages %}
-      <li {% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message }}</li>
+      <li{% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message }}</li>
       {% endfor %}
   </ul>
   {% endif %}
