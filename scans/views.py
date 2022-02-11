@@ -234,7 +234,8 @@ def list_scans_view(request):
             scans_filters.update({
                 'status__in': ["finished", "error", "stopped"]
             })
-            
+
+    # 权限新增，过滤器复用了scans_filters    
     if request.user.id > 1:
         scans_filters.update({
             'owner_id' : request.user.id
@@ -352,17 +353,22 @@ def add_scan_def_view(request):
     scan_policies = EnginePolicy.objects.all().prefetch_related("engine", "scopes").order_by(Lower('name'))
     
     # 2021.12.1 权限新增
-    filters = {}
+    # 2022.1.18 用户除了选属于自己的引擎，而且那个引擎至少那个时候的状态是READY，而且还要在引擎类型里面选
+    filters = {'status': 'READY'}
     if request.user.id > 1:
         filters.update({
-            'user_id':request.user.id
+            'user_id':request.user.id,
+            'status': 'READY'
         })
+
+    # scan_engines为用户拥有的可用引擎类型（包含distinct）
     scan_engines = []
     for sc in EngineInstance.objects.filter(**filters).all().values('engine__name', 'engine__id').order_by('engine__name').distinct():
         scan_engines.append({
             'id': sc['engine__id'],
             'name': sc['engine__name']
         })
+    # scan_engines_json为用户拥有的全部可用引擎实例
     scan_engines_json = json.dumps(list(EngineInstance.objects.filter(**filters).all().values('id', 'name', 'engine__name', 'engine__id')))
     teams_list = request.user.users_team.values('id', 'name').order_by('name')
 
@@ -374,17 +380,20 @@ def add_scan_def_view(request):
             "name": p.name,
             "scopes": list(p.scopes.values_list("id", flat=True)),
         })
-
+    
     if request.method == 'GET' or ScanDefinitionForm(request.POST, user=request.user).errors:
         form = ScanDefinitionForm(user=request.user)
 
+    # 如果用户是创建新的扫描任务
     elif request.method == 'POST':
         form = ScanDefinitionForm(request.POST, user=request.user)
 
         if form.is_valid():
             scan_definition = ScanDefinition()
             scan_definition.engine_policy = form.cleaned_data['engine_policy']
-            scan_definition.engine_type = scan_definition.engine_policy.engine
+            scan_definition.engine_type = scan_definition.engine_policy.engine #面向对象基本思想
+            # 通过用户选择的策略，推断出其选择的引擎，然后在那个引擎类型范围内随机用户的引擎实例
+            engine_type_id = scan_definition.engine_type.id
             scan_definition.scan_type = form.cleaned_data['scan_type']
             scan_definition.title = form.cleaned_data['title']
             scan_definition.description = form.cleaned_data['description']
@@ -405,20 +414,14 @@ def add_scan_def_view(request):
                 except Exception:
                     scan_definition.scheduled_at = None
                     scan_definition.enabled = False
-        
+
+            # 如果前端选择引擎的下拉框非random
             if int(form.data['engine_id']) > 0:
                 # todo: check if the engine is compliant with the scan policy
                 scan_definition.engine = EngineInstance.objects.get(id=int(form.data['engine_id']))
-            # 如果前端用户选择了random 2021.12.6 ————此处需要判断engine类型，防止引擎类型溢出
-            else:
-                ids = [] # 该用户对应的所有探针id
-                result = EngineInstance.objects.filter(**filters).all()
-                for i in result:
-                    ids.append(i.id)
-                #raise Exception(ids[random.randint(0,len(ids)-1)])
-                scan_definition.engine = EngineInstance.objects.get(id=ids[random.randint(0,len(ids)-1)])
+            # 之前的else部分在印象笔记的讨论中已删除，如需查看参见印象笔记Patrowl/2022.02推进计划
             scan_definition.save()
-
+            
             # Check and add team(s)
             if form.data['scan_team'] == 'yes':
                 scan_definition.teams.add(request.user.users_team.get(id=form.data['scan_team_list']))
@@ -529,10 +532,12 @@ def edit_scan_def_view(request, scan_def_id):
     scan_policies = list(EnginePolicy.objects.all().prefetch_related("engine", "scopes"))
     
     # 2021.12.1 权限新增
-    filters = {}
+    # 2022.1.18 用户除了选属于自己的引擎，而且那个引擎至少那个时候的状态是READY，而且还要在引擎类型里面选
+    filters = {'status': 'READY'}
     if request.user.id > 1:
         filters.update({
-            'user_id':request.user.id
+            'user_id':request.user.id,
+            'status': 'READY'
         })
     scan_engines = []
     for sc in EngineInstance.objects.filter(**filters).all().values('engine__name', 'engine__id').order_by('engine__name').distinct():
@@ -550,6 +555,7 @@ def edit_scan_def_view(request, scan_def_id):
     form = None
     if request.method == 'GET':
         form = ScanDefinitionForm(instance=scan_definition, user=request.user)
+    # 如果用户要更新扫描任务
     elif request.method == 'POST':
         form = ScanDefinitionForm(request.POST, user=request.user)
 

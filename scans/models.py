@@ -90,6 +90,7 @@ class ScanDefinition(models.Model):
     periodic_task    = models.ForeignKey(PeriodicTask, null=True, blank=True, on_delete=models.CASCADE)
     #scheduled_task   = models.UUIDField(editable=True, null=True, blank=True)
     status           = models.CharField(max_length=20, null=True, blank=True)
+    # engine_type就等于engines.Engine
     engine_type      = models.ForeignKey('engines.Engine', null=True, on_delete=models.SET_NULL)
     engine           = models.ForeignKey('engines.EngineInstance', null=True, blank=True, on_delete=models.SET_NULL) #Force scan instance
     engine_policy    = models.ForeignKey('engines.EnginePolicy', null=True, on_delete=models.SET_NULL)
