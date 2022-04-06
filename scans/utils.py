@@ -45,11 +45,25 @@ def _run_scan(scan_def_id, owner_id, eta=None):
         scope='engine', type='scan_run', owner=get_user_model().objects.get(id=owner_id), request_context=inspect.stack())
     engine = None
 
-    # Patrowl中扫描任务如果创建时选择的是随机引擎，那么其任务记录中的engine_id为null
-    # 以后每次点击run时，在这里都会进行判断
-    # 如果用户在任务定义中选了某个具体的引擎
+    # Patrowl中扫描任务如果创建时选择的是随机引擎，那么其任务记录中的engine_id为null，以后每次点击run时，在这里都会进行判断
+    # 如果用户在任务定义中选了某个具体的引擎，此处也要进行判断，如engine不可用，需要给用户重新指定1个可用引擎，或者设为None
     if scan_def.engine:
-        engine = scan_def.engine
+        user_select_engine = scan_def.engine # 拿到用户先前选定的引擎
+        filters = {
+            'user_id': owner_id,
+            'engine_id': scan_def.engine_type,
+            'status': 'READY'
+        }
+        # 拿到用户符合条件的所有引擎
+        engines = EngineInstance.objects.filter(**filters)
+        if engines.count() > 0:
+            if user_select_engine in engines:
+                engine = user_select_engine
+            else:
+                engine = random.choice(engines)
+                scan_def.engine = None
+                scan_def.save()
+
     # 如果是随机，原代码是在数据库中该类型的所有引擎中进行随机，这是有问题的
     # 随机应当是在该用户身份下该引擎类型中的所有可用引擎范围内随机
     else:

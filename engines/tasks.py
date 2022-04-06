@@ -40,6 +40,7 @@ def test_task(self, queue_name):
     return True
 
 
+# 此处为celery托管的定时任务@task，用于请求Nessus Engine API获取各可用探针的最新状态并通过Django ORM更新至Postgre数据库
 @shared_task(bind=True, acks_late=True)
 def refresh_engines_status_task(self):
     for engine in EngineInstance.objects.filter(enabled=True).only("api_url", "status"):

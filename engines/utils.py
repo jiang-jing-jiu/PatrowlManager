@@ -203,11 +203,18 @@ def _run_scan_job(self, evt_prefix, scan_id, assets_subset, position=1, max_time
 
     # -x- Select an engine instance
     engine_inst = None
-    if scan.scan_definition.engine is None:
-        engine_candidates = EngineInstance.objects.filter(
-            engine__name=str(scan.scan_definition.engine_type.name).upper(),
-            status="READY",
-            enabled=True)
+    if scan.engine is None:
+        if self.request.user.id == 1:
+            engine_candidates = EngineInstance.objects.filter(
+                engine__name=str(scan.scan_definition.engine_type.name).upper(),
+                status="READY",
+                enabled=True)
+        else:
+            engine_candidates = EngineInstance.objects.filter(
+                user_id=self.request.user.id,
+                engine__name=str(scan.scan_definition.engine_type.name).upper(),
+                status="READY",
+                enabled=True)
         if len(engine_candidates) > 0:
             engine_inst = random.choice(engine_candidates)
         else:
@@ -221,7 +228,7 @@ def _run_scan_job(self, evt_prefix, scan_id, assets_subset, position=1, max_time
             else:
                 engine_inst = None
     else:
-        engine_inst = scan.scan_definition.engine
+        engine_inst = scan.engine
         if engine_inst.status not in ["READY", "BUSY"] or engine_inst.enabled is False:
             engine_inst = None
             Event.objects.create(message="{} BeforeScan - Engine '{}' not available (status: {}, enabled: {}). Task aborted.".format(evt_prefix, engine_inst.name, engine_inst.status, engine_inst.enabled), type="ERROR", severity="ERROR", scan=scan)
