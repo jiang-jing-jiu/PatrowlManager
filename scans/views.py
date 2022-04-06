@@ -566,9 +566,9 @@ def edit_scan_def_view(request, scan_def_id):
             # scan_definition.enabled = form.cleaned_data['enabled'] is True
             scan_definition.engine_policy = form.cleaned_data['engine_policy']
             scan_definition.engine_type = scan_definition.engine_policy.engine
-            if form.cleaned_data['engine'] is not None and len(form.cleaned_data['engine']) > 0:
+            if form.data['engine_id'] is not None and int(form.data['engine_id']) > 0:
                 # todo: check if the engine is compliant with the scan policy
-                scan_definition.engine = EngineInstance.objects.get(id=form.data['engine'])
+                scan_definition.engine = EngineInstance.objects.get(id=form.data['engine_id'])
             else:
                 scan_definition.engine = None
 
@@ -665,11 +665,11 @@ def edit_scan_def_view(request, scan_def_id):
                     "owner_id": request_user_id,
                 }
 
-                if form.cleaned_data['engine'] is not None and form.data['engine'] != '' and int(form.data['engine']) > 0:
+                if form.data['engine_id'] is not None and form.data['engine_id'] != '' and int(form.data['engine_id']) > 0:
                     parameters.update({
-                        "engine_id": EngineInstance.objects.get(id=form.data['engine']).id,
+                        "engine_id": EngineInstance.objects.get(id=form.data['engine_id']).id,
                         "scan_params": {
-                            "engine_id": EngineInstance.objects.get(id=form.data['engine']).id
+                            "engine_id": EngineInstance.objects.get(id=form.data['engine_id']).id
                         }
                     })
 
