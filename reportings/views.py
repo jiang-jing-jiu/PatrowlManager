@@ -19,6 +19,9 @@ import operator
 import copy
 import ast
 
+# 三级权限
+from django.contrib.auth.models import User, Group
+
 
 @login_required
 def homepage_dashboard_view(request):
@@ -28,7 +31,16 @@ def homepage_dashboard_view(request):
         # @Todo: ensure the team is allowed for this user
         teamid_selected = teamid
     scans_filters={}
-    if request.user.id > 1:
+
+    # 三级权限
+    if request.user.id == 1:
+        pass
+    elif request.user.id < 8:
+        group_users = [ i.id for i in User.objects.filter(groups__name=Group.objects.get(user=request.user.id))]
+        scans_filters.update({
+            'owner_id__in': group_users
+        })
+    else:
         scans_filters.update({
             'owner_id': request.user.id
         })

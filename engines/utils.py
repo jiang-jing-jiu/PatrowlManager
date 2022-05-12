@@ -17,6 +17,10 @@ import time
 import datetime
 import uuid
 from copy import deepcopy
+
+# 三级权限
+from django.contrib.auth.models import User, Group
+
 # import logging
 # logger = logging.getLogger(__name__)
 
@@ -64,6 +68,7 @@ def _run_scan(evt_prefix, scan_id):
         scan = Scan.objects.get(id=scan_id)
     except Exception:
         return False
+    return scan.__dict__
     scan.update_status('started', 'started_at')
 
     # Sync the asset lists
@@ -206,6 +211,13 @@ def _run_scan_job(self, evt_prefix, scan_id, assets_subset, position=1, max_time
     if scan.engine is None:
         if self.request.user.id == 1:
             engine_candidates = EngineInstance.objects.filter(
+                engine__name=str(scan.scan_definition.engine_type.name).upper(),
+                status="READY",
+                enabled=True)
+        elif self.request.user.id < 8:
+            group_users = [ i.id for i in User.objects.filter(groups__name=Group.objects.get(user=request.user.id))]
+            engine_candidates = EngineInstance.objects.filter(
+                user_id__in=group_users,
                 engine__name=str(scan.scan_definition.engine_type.name).upper(),
                 status="READY",
                 enabled=True)

@@ -8,6 +8,8 @@ from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from .models import Event, Alert
 from users.models import Team, TeamUser
 
+# 三级权限
+from django.contrib.auth.models import User, Group
 
 def delete_event_view(request, event_id):
     """Delete an event."""
@@ -57,7 +59,13 @@ def list_alerts_view(request):
         alerts_list = alerts_list.filter(severity=severity)
     
     # 2021.11.29 权限增加
-    if request.user.id >1:
+    # 三级权限
+    if request.user.id == 1:
+        pass
+    elif request.user.id < 8:
+        group_users = [ i.id for i in User.objects.filter(groups__name=Group.objects.get(user=request.user.id))]
+        alerts_list = alerts_list.filter(owner_id__in=group_users)
+    else:
         alerts_list = alerts_list.filter(owner_id=request.user.id)
 
     nb_alerts = alerts_list.count()

@@ -14,14 +14,24 @@ import os
 import json
 import base64
 
+# 三级权限
+from django.contrib.auth.models import User, Group
 
 @pro_group_required('EnginesManager', 'EnginesViewer')
 def list_engines_view(request):
+    # 三级权限
     if request.user.id==1:
         engines = EngineInstance.objects.all().only(
             "name", "enabled", "status", "api_url", "updated_at"
         ).annotate(
-            type=F("engine__name") #注解别名
+            type=F("engine__name")
+        ).order_by('name')
+    elif request.user.id < 8:
+        group_users = [ i.id for i in User.objects.filter(groups__name=Group.objects.get(user=request.user.id))]
+        engines = EngineInstance.objects.filter(user_id__in = group_users).all().only(
+            "name", "enabled", "status", "api_url", "updated_at"
+        ).annotate(
+            type=F("engine__name")
         ).order_by('name')
     else:
         engines = EngineInstance.objects.filter(user_id=request.user.id).all().only(

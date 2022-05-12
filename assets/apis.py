@@ -25,6 +25,9 @@ import mimetypes
 import datetime
 import urllib
 
+# 三级权限
+from django.contrib.auth.models import User, Group
+
 
 # Assets
 @api_view(['GET'])
@@ -217,10 +220,17 @@ def list_assets_api(request):
         taggroups = taggroups.filter(teams__in=team)
     
     # Filter by owner_id 2021.11.28 权限增加 
-    if request.user.id > 1:
+    # 202204.06 三级权限
+    if request.user.id == 1:
+        pass
+    elif request.user.id < 8:
+        group_users = [ i.id for i in User.objects.filter(groups__name=Group.objects.get(user=request.user.id))]
+        assets = assets.filter(owner_id__in=group_users)
+        assetgroups = assetgroups.filter(owner_id__in=group_users)
+        #taggroups = taggroups.filter(owner_id=request.user.id)
+    else:
         assets = assets.filter(owner_id=request.user.id)
         assetgroups = assetgroups.filter(owner_id=request.user.id)
-        #taggroups = taggroups.filter(owner_id=request.user.id)
 
     assets_list = list(assets)
     assetgroups_list = list(assetgroups)

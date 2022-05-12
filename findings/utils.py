@@ -7,6 +7,9 @@ from assets.models import AssetOwner
 
 import datetime
 
+# 三级权限
+from django.contrib.auth.models import User, Group
+
 
 def _search_findings(request):
     # Check team
@@ -105,7 +108,14 @@ def _search_findings(request):
         filters.update({"engine_type": filter_by_engine})
     if filter_by_scope:
         filters.update({"scan__engine_policy__scopes__in": filter_by_scope})
-    if request.user.id != 1:
+
+    # 三级权限
+    if request.user.id == 1:
+        pass
+    elif request.user.id < 8:
+        group_users = [ i.id for i in User.objects.filter(groups__name=Group.objects.get(user=request.user.id))]
+        filters.update({"owner_id__in":group_users})
+    else:
         filters.update({"owner_id":request.user.id})
 
     if teamid_selected >= 0:

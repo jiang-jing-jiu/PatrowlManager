@@ -24,6 +24,9 @@ import shlex
 import json
 import random
 
+# 三级权限
+from django.contrib.auth.models import User, Group
+
 
 @pro_group_required('ScansManager', 'ScansViewer')
 def detail_scan_view(request, scan_id):
@@ -235,10 +238,18 @@ def list_scans_view(request):
                 'status__in': ["finished", "error", "stopped"]
             })
 
-    # 权限新增，过滤器复用了scans_filters    
-    if request.user.id > 1:
+    # 权限新增，过滤器复用了scans_filters   
+    # 三级权限 
+    if request.user.id == 1:
+        pass
+    elif request.user.id < 8:
+        group_users = [ i.id for i in User.objects.filter(groups__name=Group.objects.get(user=request.user.id))]
         scans_filters.update({
-            'owner_id' : request.user.id
+            'owner_id__in' : group_users
+        })
+    else:
+        scans_filters.update({
+            'owner_id' : request.user.id,
         })
 
     if teamid_selected >= 0:
@@ -289,11 +300,19 @@ def list_scan_def_view(request):
     scans = Scan.objects.all()
     
     # 2021.11.28 权限增加
+    # 三级权限
     filters = {}
-    if request.user.id > 1:
+    if request.user.id == 1:
+        pass
+    elif request.user.id < 8:
+        group_users = [ i.id for i in User.objects.filter(groups__name=Group.objects.get(user=request.user.id))]
         filters.update({
-            'owner_id': request.user.id
-    })
+            'owner_id__in': group_users,
+        })
+    else:
+        filters.update({
+            'owner_id': request.user.id,
+        })
 
 
     if teamid_selected >= 0:
@@ -354,10 +373,21 @@ def add_scan_def_view(request):
     
     # 2021.12.1 权限新增
     # 2022.1.18 用户除了选属于自己的引擎，而且那个引擎至少那个时候的状态是READY，而且还要在引擎类型里面选
-    filters = {'status': 'READY'}
-    if request.user.id > 1:
+    # 三级权限
+    filters = {}
+    if request.user.id == 1:
         filters.update({
-            'user_id':request.user.id,
+            'status': 'READY'
+        })
+    elif request.user.id < 8:
+        group_users = [ i.id for i in User.objects.filter(groups__name=Group.objects.get(user=request.user.id))]
+        filters.update({
+            'user_id__in': group_users,
+            'status': 'READY'
+        })
+    else:
+        filters.update({
+            'user_id': request.user.id,
             'status': 'READY'
         })
 
@@ -533,12 +563,24 @@ def edit_scan_def_view(request, scan_def_id):
     
     # 2021.12.1 权限新增
     # 2022.1.18 用户除了选属于自己的引擎，而且那个引擎至少那个时候的状态是READY，而且还要在引擎类型里面选
-    filters = {'status': 'READY'}
-    if request.user.id > 1:
+    # 三级权限
+    filters = {}
+    if request.user.id == 1:
         filters.update({
-            'user_id':request.user.id,
             'status': 'READY'
         })
+    elif request.user.id < 8:
+        group_users = [ i.id for i in User.objects.filter(groups__name=Group.objects.get(user=request.user.id))]
+        filters.update({
+            'user_id__in': group_users,
+            'status': 'READY'
+        })
+    else:
+        filters.update({
+            'user_id': request.user.id,
+            'status': 'READY'
+        })
+        
     scan_engines = []
     for sc in EngineInstance.objects.filter(**filters).all().values('engine__name', 'engine__id').order_by('engine__name').distinct():
         scan_engines.append({

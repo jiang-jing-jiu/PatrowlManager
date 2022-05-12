@@ -26,6 +26,9 @@ from common.utils import encoding, pro_permission_required, pro_group_required
 import csv
 import copy
 
+# 三级权限
+from django.contrib.auth.models import User, Group
+
 @pro_group_required('AssetsViewer', 'AssetsManager')
 def list_assets_view(request):
     # Check team
@@ -101,7 +104,13 @@ def list_assets_view(request):
             assets_list = assets_list.filter(categories__value=tag)
     
     # 2021.11.28 权限新增
-    if request.user.id > 1:
+    # 2022.04.06 三级
+    if request.user.id == 1:
+        pass
+    elif request.user.id < 8:
+        group_users = [ i.id for i in User.objects.filter(groups__name=Group.objects.get(user=request.user.id))]
+        filters &= Q(owner_id__in=group_users)
+    else:
         filters &= Q(owner_id=request.user.id)
         
     # Query
@@ -162,9 +171,17 @@ def list_assets_view(request):
         assets = assets_paginator.page(assets_paginator.num_pages)
 
     # List asset groups
+    # 三级权限
     asset_groups = []
     filters = {}
-    if request.user.id > 1:
+    if request.user.id == 1:
+        pass
+    elif request.user.id < 8:
+        group_users = [ i.id for i in User.objects.filter(groups__name=Group.objects.get(user=request.user.id))]
+        filters.update({
+            'owner_id__in': group_users
+        })
+    else:
         filters.update({
             'owner_id': request.user.id
         })

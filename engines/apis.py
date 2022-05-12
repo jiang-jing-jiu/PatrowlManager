@@ -17,6 +17,9 @@ import requests
 import json
 import time
 
+# 三级权限
+from django.contrib.auth.models import User, Group
+
 
 @api_view(['GET'])
 @pro_group_required('EnginesManager', 'EnginesViewer')
@@ -214,13 +217,26 @@ def list_engines_intances_api(requests):
     # 2021.11.28 权限增加
     filters = {}
     EngineInstanceFilters = {}
-    if requests.user.id > 1:
+    # 三级权限
+    if requests.user.id == 1:
+        pass
+    elif requests.user.id < 8:
+        group_users = [ i.id for i in User.objects.filter(groups__name=Group.objects.get(user=requests.user.id))]
+        filters.update({
+            'owner_id__in': group_users
+        })
+        EngineInstanceFilters.update({
+            'user_id__in': group_users
+        })
+    else:
         filters.update({
             'owner_id': requests.user.id
         })
         EngineInstanceFilters.update({
             'user_id': requests.user.id
         })
+
+
     for engine in EngineInstance.objects.filter(**EngineInstanceFilters).all().order_by("name"):
         engines.append({
             "id": engine.id,

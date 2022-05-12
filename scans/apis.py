@@ -29,6 +29,8 @@ import json
 import os
 import csv
 import tzlocal
+# 三级权限
+from django.contrib.auth.models import User, Group
 
 import logging
 logger = logging.getLogger(__name__)
@@ -252,16 +254,27 @@ def get_scans_heatmap_api(request):
     
     # 2021.11.29 权限新增    
     filter = {}
-    if request.user.id >1:
+    # 三级权限
+    if request.user.id == 1:
+        pass
+    elif request.user.id < 8:
+        group_users = [ i.id for i in User.objects.filter(groups__name=Group.objects.get(user=request.user.id))]
+        filter.update({
+            'owner_id__in' : group_users
+        })
+    else:
         filter.update({
             'owner_id' : request.user.id
         })
+
 
     if teamid >= 0:
         for scan in Scan.objects.filter(**filter).for_team(request.user, teamid).all():
             data.update({scan.updated_at.astimezone(tzlocal.get_localzone()).strftime("%s"): 1})
     else:
-        for scan in Scan.objects.filter(**filter).for_user(request.user).all():
+        # for scan in Scan.objects.filter(**filter).for_user(request.user).all():
+        # 热力图
+        for scan in Scan.objects.filter(**filter).all():
             data.update({scan.updated_at.astimezone(tzlocal.get_localzone()).strftime("%s"): 1})
     return JsonResponse(data)
 

@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-
+from django.http import JsonResponse, HttpResponse
 from django.contrib.auth import get_user_model
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
@@ -17,6 +17,9 @@ import uuid
 import random
 import json
 import inspect
+
+# 三级权限
+from django.contrib.auth.models import User, Group
 
 
 def _update_celerybeat():
@@ -40,6 +43,9 @@ def _update_celerybeat():
 
 def _run_scan(scan_def_id, owner_id, eta=None):
     scan_def = get_object_or_404(ScanDefinition, id=scan_def_id)
+    
+    
+    
     AuditLog.objects.create(
         message="Scan '{}' started".format(scan_def),
         scope='engine', type='scan_run', owner=get_user_model().objects.get(id=owner_id), request_context=inspect.stack())
@@ -49,13 +55,29 @@ def _run_scan(scan_def_id, owner_id, eta=None):
     # 如果用户在任务定义中选了某个具体的引擎，此处也要进行判断，如engine不可用，需要给用户重新指定1个可用引擎，或者设为None
     if scan_def.engine:
         user_select_engine = scan_def.engine # 拿到用户先前选定的引擎
-        filters = {
-            'user_id': owner_id,
-            'engine_id': scan_def.engine_type,
-            'status': 'READY'
-        }
+        if owner_id == 1:
+            filters = {
+                'engine_id': scan_def.engine_type,
+                'status': 'READY'
+            }
+        elif owner_id < 8:
+            group_users = [ i.id for i in User.objects.filter(groups__name=Group.objects.get(user=owner_id))]
+            filters = {
+                'user_id__in': group_users,
+                'engine_id': scan_def.engine_type,
+                'status': 'READY'
+            }
+        else: 
+            filters = {
+                'user_id': owner_id,
+                'engine_id': scan_def.engine_type,
+                'status': 'READY'
+            }
+
         # 拿到用户符合条件的所有引擎
         engines = EngineInstance.objects.filter(**filters)
+        # return JsonResponse({'status': engines.count()})
+        
         if engines.count() > 0:
             if user_select_engine in engines:
                 engine = user_select_engine
@@ -67,11 +89,25 @@ def _run_scan(scan_def_id, owner_id, eta=None):
     # 如果是随机，原代码是在数据库中该类型的所有引擎中进行随机，这是有问题的
     # 随机应当是在该用户身份下该引擎类型中的所有可用引擎范围内随机
     else:
-        filters = {
-            'user_id': owner_id,
-            'engine_id': scan_def.engine_type,
-            'status': 'READY'
-        }
+        if owner_id == 1:
+            filters = {
+                'engine_id': scan_def.engine_type,
+                'status': 'READY'
+            }
+        elif owner_id < 8:
+            group_users = [ i.id for i in User.objects.filter(groups__name=Group.objects.get(user=owner_id))]
+            filters = {
+                'user_id__in': group_users,
+                'engine_id': scan_def.engine_type,
+                'status': 'READY'
+            }
+        else:
+            filters = {
+                'user_id': owner_id,
+                'engine_id': scan_def.engine_type,
+                'status': 'READY'
+            }
+
         engines = EngineInstance.objects.filter(**filters)
         if engines.count() > 0:
             engine = random.choice(engines)
@@ -149,9 +185,12 @@ def _run_scan(scan_def_id, owner_id, eta=None):
             "eta": eta,
             "countdown": None
         })
+        
+    
 
     # enqueue the task in the right queue
     resp = startscan_task.apply_async(**scan_options)
+    
     scan.status = "enqueued"
     scan.task_id = uuid.UUID(str(resp))
     scan.save()
