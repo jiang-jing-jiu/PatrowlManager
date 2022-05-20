@@ -125,7 +125,7 @@ label.radio {
 
     <!-- Asset selection -->
     <div class="form-group">
-      <label class="col-sm-2 control-label" for="id_assets_list">搜索资产:</label>
+      <label class="col-sm-2 control-label" for="id_assets_list">搜索资产(s):</label>
       <div class="col-sm-5 has-feedback">
         <div id="scrollable-dropdown-menu">
           <input class="typeahead form-control" type="text" placeholder="搜索资产">
@@ -182,7 +182,7 @@ label.radio {
 
     <!-- Scan policy selection -->
     <div class="form-group hidden" id="policies-div">
-      <label class="col-sm-2 control-label" for="id_engine_policy">Select Policy:</label>
+      <label class="col-sm-2 control-label" for="id_engine_policy">选择策略:</label>
       <div class="col-sm-4 custom-control custom-radio">
         {% for policy in scan_policies %}
         <label class="radio" label-id="{{ policy.id }}">
@@ -409,7 +409,7 @@ label.radio {
           _selected_assets.push(datum["value"]);
           _id_asset += 1;
           $('div.cbx_assets').append("<label for='id_assets_list_"+_id_asset+"' class='custom-control-label'>\
-            <input id='id_assets_list_"+_id_asset+"' class='custom-control-input' name='assets_list' type='checkbox' value='"+datum["id"]+"' asset-type='"+datum["type"]+"'checked/> "+e.target.value+"</label><br/>");
+            <input id='id_assets_list_"+_id_asset+"' class='custom-control-input' name='assets_list' type='checkbox' value='"+datum["id"]+"' asset-type='"+datum["type"]+"'checked/> "+e.target.value+" - "+datum["name"]+"</label><br/>");
         } else if (datum["format"] == "taggroup") {
         _selected_assets.push(datum["value"]);
           _id_asset += 1;
