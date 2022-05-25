@@ -68,7 +68,6 @@ def _run_scan(evt_prefix, scan_id):
         scan = Scan.objects.get(id=scan_id)
     except Exception:
         return False
-    return scan.__dict__
     scan.update_status('started', 'started_at')
 
     # Sync the asset lists
@@ -325,7 +324,7 @@ def _run_scan_job(self, evt_prefix, scan_id, assets_subset, position=1, max_time
             Event.objects.create(message=f"{evt_prefix} DuringScan - ScanJob timeout reached. Task aborted.", type="ERROR", severity="ERROR", scan=scan)
             return False
 
-        if scan_status in ['STARTED', 'SCANNING', 'PAUSING', 'STOPING']:
+        if scan_status in ['STARTED', 'SCANNING', 'PAUSING', 'STOPING', 'SCHEDULED', 'PROCESSING']:
             retries = NB_MAX_RETRIES
         else:
             Event.objects.create(message="{} DuringScan - bad scanner status: {} (retries left={}).".format(evt_prefix, scan_status, retries), type="ERROR", severity="ERROR", scan=scan)
