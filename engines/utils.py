@@ -214,7 +214,7 @@ def _run_scan_job(self, evt_prefix, scan_id, assets_subset, position=1, max_time
                 status="READY",
                 enabled=True)
         elif self.request.user.id < 8:
-            group_users = [ i.id for i in User.objects.filter(groups__name=Group.objects.get(user=request.user.id))]
+            group_users = [ i.id for i in User.objects.filter(groups__name=Group.objects.get(user=self.request.user.id))]
             engine_candidates = EngineInstance.objects.filter(
                 user_id__in=group_users,
                 engine__name=str(scan.scan_definition.engine_type.name).upper(),
@@ -230,10 +230,24 @@ def _run_scan_job(self, evt_prefix, scan_id, assets_subset, position=1, max_time
             engine_inst = random.choice(engine_candidates)
         else:
             # Otherwise, check Busy ones
-            engine_candidates_busy = EngineInstance.objects.filter(
-                engine__name=str(scan.scan_definition.engine_type.name).upper(),
-                status="BUSY",
-                enabled=True)
+            if self.request.user.id == 1:
+                engine_candidates_busy = EngineInstance.objects.filter(
+                    engine__name=str(scan.scan_definition.engine_type.name).upper(),
+                    status="BUSY",
+                    enabled=True)
+            elif self.request.user.id < 8:
+                group_users = [ i.id for i in User.objects.filter(groups__name=Group.objects.get(user=self.request.user.id))]
+                engine_candidates_busy = EngineInstance.objects.filter(
+                    user_id__in=group_users,
+                    engine__name=str(scan.scan_definition.engine_type.name).upper(),
+                    status="BUSY",
+                    enabled=True)
+            else:
+                engine_candidates_busy = EngineInstance.objects.filter(
+                    user_id=self.request.user.id,
+                    engine__name=str(scan.scan_definition.engine_type.name).upper(),
+                    status="BUSY",
+                    enabled=True)
             if len(engine_candidates_busy) > 0:
                 engine_inst = random.choice(engine_candidates_busy)
             else:
