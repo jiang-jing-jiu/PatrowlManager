@@ -95,7 +95,7 @@ class RawFinding(models.Model):
     # owner       = models.ForeignKey(get_user_model(), on_delete=models.DO_NOTHING, null=True, blank=True)
     owner       = models.ForeignKey(get_user_model(), on_delete=models.SET_NULL, null=True, blank=True)
     title       = models.CharField(max_length=256)
-    type        = models.CharField(max_length=50)
+    type        = models.CharField(max_length=1024)
     hash        = models.CharField(max_length=256, default='')
     confidence  = models.CharField(max_length=10)
     severity    = models.CharField(choices=FINDING_SEVERITIES, default='info', max_length=10)
@@ -208,7 +208,7 @@ class Finding(models.Model):
     # owner       = models.ForeignKey(get_user_model(), on_delete=models.DO_NOTHING, null=True, blank=True)
     owner       = models.ForeignKey(get_user_model(), on_delete=models.SET_NULL, null=True, blank=True)
     title       = models.CharField(max_length=256, default='title',verbose_name="标题")
-    type        = models.CharField(max_length=50,verbose_name="类型")
+    type        = models.CharField(max_length=1024,verbose_name="类型")
     hash        = models.CharField(max_length=256)
     confidence  = models.CharField(max_length=10)
     severity    = models.CharField(verbose_name="严重程度",choices=FINDING_SEVERITIES, default='info', max_length=10)  # info, low, medium, high, critical
