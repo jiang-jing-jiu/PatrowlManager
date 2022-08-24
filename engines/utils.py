@@ -179,7 +179,7 @@ def _run_scan_job(self, evt_prefix, scan_id, assets_subset, position=1, max_time
 
     # Check Scan status
     if scan.status not in ["started", "enqueued"]:
-        Event.objects.create(message="{} BeforeScan - Bad scan status: '{}'. Task aborted.".format(evt_prefix, scan.status), type="ERROR", severity="ERROR", scan=scan)
+        Event.objects.create(message="{} BeforeScan - 引擎状态: '{}'. 扫描终止.".format(evt_prefix, scan.status), type="ERROR", severity="ERROR", scan=scan)
         scan_job.update_status('finished', 'finished_at')
         return False
 
@@ -208,13 +208,13 @@ def _run_scan_job(self, evt_prefix, scan_id, assets_subset, position=1, max_time
     # -x- Select an engine instance
     engine_inst = None
     if scan.engine is None:
-        if self.request.user.id == 1:
+        if scan.owner_id == 1:
             engine_candidates = EngineInstance.objects.filter(
                 engine__name=str(scan.scan_definition.engine_type.name).upper(),
                 status="READY",
                 enabled=True)
-        elif self.request.user.id < 8:
-            group_users = [ i.id for i in User.objects.filter(groups__name=Group.objects.get(user=self.request.user.id))]
+        elif scan.owner_id < 8:
+            group_users = [ i.id for i in User.objects.filter(groups__name=Group.objects.get(user=scan.owner_id))]
             engine_candidates = EngineInstance.objects.filter(
                 user_id__in=group_users,
                 engine__name=str(scan.scan_definition.engine_type.name).upper(),
@@ -222,7 +222,7 @@ def _run_scan_job(self, evt_prefix, scan_id, assets_subset, position=1, max_time
                 enabled=True)
         else:
             engine_candidates = EngineInstance.objects.filter(
-                user_id=self.request.user.id,
+                user_id=scan.owner_id,
                 engine__name=str(scan.scan_definition.engine_type.name).upper(),
                 status="READY",
                 enabled=True)
@@ -230,13 +230,13 @@ def _run_scan_job(self, evt_prefix, scan_id, assets_subset, position=1, max_time
             engine_inst = random.choice(engine_candidates)
         else:
             # Otherwise, check Busy ones
-            if self.request.user.id == 1:
+            if scan.owner_id == 1:
                 engine_candidates_busy = EngineInstance.objects.filter(
                     engine__name=str(scan.scan_definition.engine_type.name).upper(),
                     status="BUSY",
                     enabled=True)
-            elif self.request.user.id < 8:
-                group_users = [ i.id for i in User.objects.filter(groups__name=Group.objects.get(user=self.request.user.id))]
+            elif scan.owner_id < 8:
+                group_users = [ i.id for i in User.objects.filter(groups__name=Group.objects.get(user=scan.owner_id))]
                 engine_candidates_busy = EngineInstance.objects.filter(
                     user_id__in=group_users,
                     engine__name=str(scan.scan_definition.engine_type.name).upper(),
@@ -244,7 +244,7 @@ def _run_scan_job(self, evt_prefix, scan_id, assets_subset, position=1, max_time
                     enabled=True)
             else:
                 engine_candidates_busy = EngineInstance.objects.filter(
-                    user_id=self.request.user.id,
+                    user_id=scan.owner_id,
                     engine__name=str(scan.scan_definition.engine_type.name).upper(),
                     status="BUSY",
                     enabled=True)
@@ -255,15 +255,21 @@ def _run_scan_job(self, evt_prefix, scan_id, assets_subset, position=1, max_time
     else:
         engine_inst = scan.engine
         if engine_inst.status not in ["READY", "BUSY"] or engine_inst.enabled is False:
+            Event.objects.create(message="{} BeforeScan - 引擎 '{}' 不可用 (status: {}, enabled: {}). 扫描终止.".format(evt_prefix, engine_inst.name, engine_inst.status, engine_inst.enabled), type="ERROR", severity="ERROR", scan=scan)
+            # 先添加Events，再清空engine_inst————因为Event里面用到了engine_inst
             engine_inst = None
-            Event.objects.create(message="{} BeforeScan - Engine '{}' not available (status: {}, enabled: {}). Task aborted.".format(evt_prefix, engine_inst.name, engine_inst.status, engine_inst.enabled), type="ERROR", severity="ERROR", scan=scan)
 
     # Check if the selected engine instance is available
     if engine_inst is None:
-        Event.objects.create(message="{} BeforeScan - No engine '{}' available. Task aborted.".format(evt_prefix, scan.scan_definition.engine_type.name), type="ERROR", severity="ERROR", scan=scan)
+        Event.objects.create(message="{} BeforeScan - 没有可用的引擎 '{}' . 扫描终止.".format(evt_prefix, scan.scan_definition.engine_type.name), type="ERROR", severity="ERROR", scan=scan)
         scan_job.update_status('error', 'finished_at')
         return False
-
+    
+    # 针对周期扫描periodic_scan任务scan没有engine_inst指定的问题，此处进行指定
+    # 对于手动扫描的任务，此处也更新一下，没毛病
+    scan.engine = engine_inst
+    scan.save()
+    
     # Engine is selected (could be BUSY)
     Event.objects.create(message="{} Engine '{}' has been selected.".format(evt_prefix, engine_inst.name), type="INFO", severity="INFO", scan=scan)
     scan_job.engine = engine_inst
@@ -275,7 +281,7 @@ def _run_scan_job(self, evt_prefix, scan_id, assets_subset, position=1, max_time
     while True:
         if time.time() > timeout:
             scan_job.update_status('error', 'finished_at')
-            Event.objects.create(message="{} BeforeScan - max timeout ({}) reached. Task aborted.".format(evt_prefix, max_timeout), type="ERROR", severity="ERROR", scan=scan)
+            Event.objects.create(message="{} BeforeScan - 达到最大超时时间 ({}) s. 扫描终止.".format(evt_prefix, max_timeout), type="ERROR", severity="ERROR", scan=scan)
             return False
         if _get_engine_status(engine=engine_inst) == "READY":
             break
@@ -318,9 +324,14 @@ def _run_scan_job(self, evt_prefix, scan_id, assets_subset, position=1, max_time
                     response_reason = json.loads(resp.text)['reason']
             except Exception:
                 pass
-
-            Event.objects.create(message="{} DuringScan - Something goes wrong (response_status_code={}, response_status={}, response_details={}). Task aborted.".format(evt_prefix, resp.status_code, json.loads(resp.text)['status'], response_reason),
-                description=str(resp.text), type="ERROR", severity="ERROR", scan=scan)
+            
+            Event.objects.create(message="[StartScan] 扫描使用的'{}' 引擎实际状态异常，请(1)ssh至Nessus探针;(2)执行rm /root/nessus/db.json;(3)执行supervisorctl restart engine_nessus;(4)等待3-5分钟，进行探针与平台级联测试".format(engine_inst.name), type="ERROR", severity="ERROR", scan=scan)
+            
+            # Event.objects.create(message="{} DuringScan - Something goes wrong (response_status_code={}, response_status={}, response_details={}). Task aborted.".format(evt_prefix, resp.status_code, json.loads(resp.text)['status'], response_reason),description=str(resp.text), type="ERROR", severity="ERROR", scan=scan)
+            # 注释部分为原代码，因为resp为500错误，其resp.text为html 500提示，此处json.loads(resp.text)会报错
+            # JSONDecodeError('Expecting value: line 1 column 1 (char 0)')
+            # 因此修改为上述，直接返回前端提示信息
+            
             return False
     except requests.exceptions.RequestException as e:
         scan_job.update_status('error', 'finished_at')
@@ -333,15 +344,16 @@ def _run_scan_job(self, evt_prefix, scan_id, assets_subset, position=1, max_time
     scan_status = _get_scan_status(engine=engine_inst, scan_id=scan_job.id)
 
     while scan_status not in ['FINISHED', 'READY'] and retries > 0:
-        if time.time() > timeout:
+
+        if time.time() > timeout: #timeout见上 timeout = time.time() + max_timeout，此脚本顶部设定为7200s（2小时）
             scan_job.update_status('error', 'finished_at')
-            Event.objects.create(message=f"{evt_prefix} DuringScan - ScanJob timeout reached. Task aborted.", type="ERROR", severity="ERROR", scan=scan)
+            Event.objects.create(message="DuringScan - 平台默认单个扫描任务完成时限为2小时，该任务已超时。请手动删除Nessus中对应的扫描任务，并调整该扫描任务中网段资产数量，建议单个Nessus扫描任务不超过5个C类段资产.", type="ERROR", severity="ERROR", scan=scan)
             return False
 
         if scan_status in ['STARTED', 'SCANNING', 'PAUSING', 'STOPING', 'SCHEDULED', 'PROCESSING']:
             retries = NB_MAX_RETRIES
         else:
-            Event.objects.create(message="{} DuringScan - bad scanner status: {} (retries left={}).".format(evt_prefix, scan_status, retries), type="ERROR", severity="ERROR", scan=scan)
+            Event.objects.create(message="{} DuringScan - 引擎状态: {} (retries left={}).".format(evt_prefix, scan_status, retries), type="ERROR", severity="ERROR", scan=scan)
             retries -= 1
         time.sleep(5)
         scan_status = _get_scan_status(engine=engine_inst, scan_id=scan_job.id)
@@ -349,7 +361,7 @@ def _run_scan_job(self, evt_prefix, scan_id, assets_subset, position=1, max_time
 
     if retries == 0:
         scan_job.update_status('error', 'finished_at')
-        Event.objects.create(message="{} DuringScan - max_retries ({}) reached. Task aborted.".format(evt_prefix, retries), type="ERROR", severity="ERROR", scan=scan)
+        Event.objects.create(message="{} DuringScan - 达到最大重试次数 ({}) . 扫描终止. 引擎实际状态异常，请(1)ssh至Nessus探针;(2)执行rm /root/nessus/db.json;(3)执行supervisorctl restart engine_nessus;(4)等待3-5分钟，进行探针与平台级联测试".format(evt_prefix, retries), type="ERROR", severity="ERROR", scan=scan)
         return False
 
     Event.objects.create(message=f"{evt_prefix} AfterScan - Scan Finished: findings are now available.", type="DEBUG", severity="DEBUG", scan=scan)

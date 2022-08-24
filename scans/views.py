@@ -600,7 +600,6 @@ def edit_scan_def_view(request, scan_def_id):
     # 如果用户要更新扫描任务
     elif request.method == 'POST':
         form = ScanDefinitionForm(request.POST, user=request.user)
-
         if form.is_valid():
             scan_definition.title = form.cleaned_data['title']
             scan_definition.status = "edited"
@@ -669,6 +668,9 @@ def edit_scan_def_view(request, scan_def_id):
                 periodic_task = PeriodicTask.objects.filter(name=task_title).first()
                 if periodic_task is not None:
                     periodic_task.delete()
+                
+                # 设置scan_definition.periodic_task为None，否则下面scan_definition.save()时会报外键不存在的错误
+                scan_definition.periodic_task = None
 
             # Check scheduling params if any
             if form.data['start_scan'] == "scheduled" and form.cleaned_data['scheduled_at'] is not None:

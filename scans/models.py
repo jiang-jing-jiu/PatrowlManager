@@ -87,7 +87,8 @@ class ScanDefinition(models.Model):
     every            = models.IntegerField(null=True, blank=True)
     period           = models.CharField(choices=PERIOD_CHOICES, default='hours', max_length=10, null=True, blank=True)
     enabled          = models.BooleanField(default=False)
-    periodic_task    = models.ForeignKey(PeriodicTask, null=True, blank=True, on_delete=models.CASCADE)
+    periodic_task    = models.ForeignKey(PeriodicTask, null=True, blank=True, on_delete=models.SET_NULL) # *Bug*删除周期任务 scan_def该字段应设为null
+    
     #scheduled_task   = models.UUIDField(editable=True, null=True, blank=True)
     status           = models.CharField(max_length=20, null=True, blank=True)
     # engine_type就等于engines.Engine
